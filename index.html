@@ -43,9 +43,9 @@
     label { display: inline-flex; align-items: center; gap: 8px; padding: 8px 10px; border: 1px solid #ddd; border-radius: 10px; background:#fff; }
     select { padding: 9px 12px; border-radius: 10px; border: 1px solid #ccc; background: #fff; }
 
-    button { padding: 10px 14px; border-radius: 10px; border: 1px solid #ccc; background: #fff; cursor: pointer; }
+    button { padding: 10px 14px; border-radius: 10px; border: 1px solid #ccc; background: #fff; }
     button.primary { border-color: #111; }
-    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    button:disabled { opacity: 0.5; }
 
     .btnRow { display:flex; gap:10px; flex-wrap: wrap; }
     .btnRow button { flex: 1 1 auto; }
@@ -90,23 +90,6 @@
       background: #fff;
       margin-left: 6px;
     }
-
-    /* Feedback form */
-    .fbGrid { display: grid; grid-template-columns: 1fr; gap: 10px; }
-    .fbGrid input[type="email"], .fbGrid textarea {
-      width: 100%;
-      padding: 10px 12px;
-      border-radius: 10px;
-      border: 1px solid #ccc;
-      font: inherit;
-      background: #fff;
-      box-sizing: border-box;
-    }
-    .fbGrid textarea { min-height: 120px; resize: vertical; }
-    .fbRow { display:flex; gap:10px; flex-wrap: wrap; align-items: center; }
-    .fbRow .hint { margin: 0; max-width: none; }
-    .ok { color: #0a7a0a; font-weight: 600; }
-    .err { color: #b00020; font-weight: 600; }
 
     #status { margin-top: 12px; }
   </style>
@@ -244,7 +227,7 @@
       <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap;">
         <label><input type="checkbox" id="toggleNeck" checked /> HWS-Achse (Brust)</label>
         <label><input type="checkbox" id="toggleLegCheck" checked /> Knie/Beine-Check (Brust)</label>
-        <label><input type="checkbox" id="toggleHandAxis" checked /> Hand-Achse (Brust)</label>
+        <label><input type="checkbox" id="toggleHandAxis" checked /> Hand-Achse (Armzug)</label>
         <label><input type="checkbox" id="toggleTimer" checked /> Timer Brust – Gleitphase</label>
         <label><input type="checkbox" id="toggleHintBox" checked /> Techniktipps nach Stop</label>
       </div>
@@ -252,26 +235,26 @@
       <details style="margin-top:10px;">
         <summary>Technik-Checkliste (Brust)</summary>
         <p class="hint">
-          Hinweise sind <b>heuristisch</b>. Je nach Aufnahmewinkel sind manche Checks weniger zuverlässig.
+          Hinweise sind experimentell. Perspektive beeinflusst Messbarkeit. Bei stark frontalem Blick sind Nacken-/HWS-Aussagen nicht valide.
         </p>
         <details>
           <summary>Knie öffnen zu weit („Schere“ / Bremsfläche)</summary>
           <p class="hint"><b>Faustregel:</b> Knieöffnung ungefähr <b>Schulterbreite</b>. Richtwert: Knie/Schulter <b>&gt; 1,55×</b>.</p>
         </details>
         <details>
-          <summary>Arme/Hände im Zug zu weit geöffnet („Oma-/Anfängerzug“)</summary>
+          <summary>Arme/Hände zu weit geöffnet im Armzug („Oma-Zug“)</summary>
           <p class="hint">
-            <b>Faustregel:</b> Im Zug Hände nicht „riesig“ nach außen führen – Ellbogen eher höher/„außen“, Unterarme greifen Wasser.
-            Richtwert: Hand/Schulter <b>&gt; 1,70×</b> (deutlich zu weit).
+            <b>Faustregel:</b> Hände/Ellbogen nicht „sehr breit“ nach außen führen. In der Zugphase eher <b>moderat</b> öffnen.
+            Richtwert: Hand/Schulter <b>&gt; 1,60×</b> = deutlich zu weit (Rot).
           </p>
         </details>
         <details>
           <summary>Beinschlag unsymmetrisch</summary>
-          <p class="hint">Richtwert: Differenz Knie-Winkel <b>&gt; 25–30°</b> über mehrere Frames. (Seitlich/45° nur eingeschränkt zuverlässig.)</p>
+          <p class="hint">Richtwert: Differenz Knie-Winkel <b>&gt; 25–30°</b> über mehrere Frames (bei 45° seitlich nur eingeschränkt valide).</p>
         </details>
         <details>
           <summary>Kopf (HWS) – neutral vs. Flexion/Extension</summary>
-          <p class="hint">Nur sinnvoll bei seitlicher Ansicht (Profil). Frontalansicht wird ignoriert.</p>
+          <p class="hint">Nur bei eher seitlicher Ansicht sinnvoll. Bei frontalem Blick wird HWS-Check automatisch ausgesetzt.</p>
         </details>
         <details>
           <summary>Gleitphase zu kurz</summary>
@@ -299,36 +282,6 @@
       <div class="hint" id="hintText"></div>
       <ul id="hintList"></ul>
     </div>
-
-    <!-- FEEDBACK standardmäßig zugeklappt -->
-    <details class="block" id="feedbackBlock" style="padding:10px 12px;">
-      <summary>Feedback / Bug melden</summary>
-      <div style="margin-top:10px;">
-        <p class="hint" style="margin-top:0;">
-          Nachricht geht direkt an <span class="mono">motaxis.postfach@gmail.com</span>.
-        </p>
-
-        <form id="feedbackForm" action="https://formspree.io/f/mzdbqzog" method="POST" class="fbGrid">
-          <label style="border:none; padding:0; background:transparent;">
-            <span class="hint" style="min-width:auto;">Deine E-Mail (optional)</span>
-          </label>
-          <input type="email" name="email" placeholder="name@mail.de (optional)" autocomplete="email" />
-
-          <label style="border:none; padding:0; background:transparent;">
-            <span class="hint" style="min-width:auto;">Nachricht</span>
-          </label>
-          <textarea name="message" required placeholder="Was ist passiert? (Gerät/Browser, Aufnahmeposition, Schritte, erwartetes Verhalten, tatsächliches Verhalten)"></textarea>
-
-          <input type="hidden" name="page" value="MOTAXIS" />
-
-          <div class="fbRow">
-            <!-- Button zeigt nur "Senden" -->
-            <button id="btnSendFeedback" type="submit" class="primary">Senden</button>
-            <span id="feedbackStatus" class="hint" aria-live="polite"></span>
-          </div>
-        </form>
-      </div>
-    </details>
   </div>
 
   <p class="hint mono" id="status">Status: bereit</p>
@@ -637,7 +590,7 @@
       return info;
     }
 
-    // Head center (ears midpoint)
+    // Head center helpers (kept for neck), but timer will not depend on head center.
     function headCenterNorm(raw) {
       const le = raw[7], re = raw[8];
       const lEye = raw[2], rEye = raw[5];
@@ -673,7 +626,7 @@
       return 1;
     }
 
-    // --- HWS state: NUR im Profil auswerten (frontal ignorieren)
+    // --- HWS state (auto-disable when frontal)
     let neckAngleEma = null;
     let neckState = "unknown";
     let neckSince = 0;
@@ -689,46 +642,33 @@
     }
 
     function drawNeckAxis(rawNorm, cssPoints, nowTs) {
+      // If we likely see face/front (not profile), HWS flex/ext is not valid -> disable feedback
+      const profile = isProfileLikely(rawNorm);
+      if (!profile) {
+        // still draw nothing + return unknown; avoids "red" in frontal view
+        return { neckDeg: null, state: "unknown", neutral: null, d: null, profile:false, facing:1 };
+      }
+
       if (!toggleNeck.checked || !rawNorm || !cssPoints) {
-        return { neckDeg: null, state: "unknown", neutral: null, d: null, profile:false, facing:1, valid:false };
+        return { neckDeg: null, state: "unknown", neutral: null, d: null, profile:false, facing:1 };
       }
 
       const ls = rawNorm[11], rs = rawNorm[12];
       const lh = rawNorm[23], rh = rawNorm[24];
       if (!ls || !rs || !lh || !rh) {
-        return { neckDeg: null, state: "unknown", neutral: null, d: null, profile:false, facing:1, valid:false };
+        return { neckDeg: null, state: "unknown", neutral: null, d: null, profile:false, facing:1 };
       }
 
       const shoulder = { x:(ls.x+rs.x)/2, y:(ls.y+rs.y)/2 };
       const hip      = { x:(lh.x+rh.x)/2, y:(lh.y+rh.y)/2 };
       const head     = headCenterNorm(rawNorm);
       if (!head) {
-        return { neckDeg: null, state: "unknown", neutral: null, d: null, profile:false, facing:1, valid:false };
+        return { neckDeg: null, state: "unknown", neutral: null, d: null, profile:false, facing:1 };
       }
 
-      const profile = isProfileLikely(rawNorm);
       const facing  = estimateFacingSign(rawNorm, head, shoulder);
-
-      if (!profile) {
-        const cssLs = cssPoints[11], cssRs = cssPoints[12];
-        const cssShoulder = (cssLs && cssRs) ? { _cx:(cssLs._cx+cssRs._cx)/2, _cy:(cssLs._cy+cssRs._cy)/2 } : null;
-        const cssHead = headCenterCss(cssPoints);
-
-        if (cssShoulder && cssHead) {
-          ctx.save();
-          ctx.lineCap = "round";
-          ctx.lineWidth = 6;
-          ctx.strokeStyle = "rgba(120,120,120,0.75)";
-          ctx.beginPath();
-          ctx.moveTo(cssShoulder._cx, cssShoulder._cy);
-          ctx.lineTo(cssHead._cx, cssHead._cy);
-          ctx.stroke();
-          ctx.restore();
-        }
-        return { neckDeg: null, state: "unknown", neutral: null, d: null, profile:false, facing, valid:false };
-      }
-
       const neckV = normVec({ x: head.x - shoulder.x, y: head.y - shoulder.y });
+
       const up = { x: 0, y: -1 };
       let ang = signedAngleDeg(up, neckV);
       if (facing < 0) ang = -ang;
@@ -777,9 +717,11 @@
       }
 
       const cssLs = cssPoints[11], cssRs = cssPoints[12];
-      const cssShoulder = (cssLs && cssRs) ? { _cx:(cssLs._cx+cssRs._cx)/2, _cy:(cssLs._cy+cssRs._cy)/2 } : null;
+      if (!cssLs || !cssRs) return { neckDeg: neckAngleEma, state: neckState, neutral, d, profile:true, facing };
+
+      const cssShoulder = { _cx:(cssLs._cx+cssRs._cx)/2, _cy:(cssLs._cy+cssRs._cy)/2 };
       const cssHead = headCenterCss(cssPoints);
-      if (!cssShoulder || !cssHead) return { neckDeg: neckAngleEma, state: neckState, neutral, d, profile:true, facing, valid:true };
+      if (!cssHead) return { neckDeg: neckAngleEma, state: neckState, neutral, d, profile:true, facing };
 
       let stroke = "rgba(255,140,0,0.95)";
       if (neckState === "green") stroke = "rgba(0,180,0,0.95)";
@@ -795,10 +737,10 @@
       ctx.stroke();
       ctx.restore();
 
-      return { neckDeg: neckAngleEma, state: neckState, neutral, d, profile:true, facing, valid:true };
+      return { neckDeg: neckAngleEma, state: neckState, neutral, d, profile:true, facing };
     }
 
-    // Knee/leg checks
+    // Knee/leg checks (note: for side45, asymmetry not reliable, we will not tip on it)
     function colorForRatio(r) {
       if (r <= 1.35) return "rgba(0,170,0,0.95)";
       if (r <= 1.55) return "rgba(255,140,0,0.95)";
@@ -806,11 +748,11 @@
     }
 
     function drawLegChecks(raw, cssPoints) {
-      if (!toggleLegCheck.checked || !raw || !cssPoints) return { kneeRatio: null, kneeDiff: null, kneeAngles: [null,null], validAsym:true };
+      if (!toggleLegCheck.checked || !raw || !cssPoints) return { kneeRatio: null, kneeDiff: null, kneeAngles: [null,null] };
 
       const kL = cssPoints[25], kR = cssPoints[26];
       const sL = cssPoints[11], sR = cssPoints[12];
-      if (!kL || !kR || !sL || !sR) return { kneeRatio: null, kneeDiff: null, kneeAngles: [null,null], validAsym:true };
+      if (!kL || !kR || !sL || !sR) return { kneeRatio: null, kneeDiff: null, kneeAngles: [null,null] };
 
       const shoulderW = distPx(sL, sR);
       const kneeW = distPx(kL, kR);
@@ -835,18 +777,14 @@
         ctx.restore();
       }
 
-      const validAsym = (filmingPreset.value === "stand");
-      return { kneeRatio, kneeDiff: diff, kneeAngles: [aL, aR], validAsym };
+      return { kneeRatio, kneeDiff: diff, kneeAngles: [aL, aR] };
     }
 
-    // Hand axis thresholds (später rot):
-    // Grün: <= 1.55
-    // Orange: <= 1.75
-    // Rot: > 1.75
-    // Tip-Trigger: > 1.75
+    // Hand axis thresholds for arm pull (your request: "normal ~1.35x")
     function colorForHandRatio(r) {
-      if (r <= 1.55) return "rgba(0,170,0,0.95)";
-      if (r <= 1.75) return "rgba(255,140,0,0.95)";
+      // Grün <= 1.35, Orange <= 1.60, Rot > 1.60
+      if (r <= 1.35) return "rgba(0,170,0,0.95)";
+      if (r <= 1.60) return "rgba(255,140,0,0.95)";
       return "rgba(220,0,0,0.95)";
     }
 
@@ -879,43 +817,37 @@
       return { handRatio };
     }
 
-    // Timer logic (Slots nur während Recording sammeln + beim Start automatisch reset)
+    // Timer logic
     let glideActive = false, glideStart = 0, currentElapsed = 0;
     let scoreEma = 0, scoreStableSince = null, scoreLowSince = null;
     let lastTorso = null;
-
     const glideTimes = [];
     const fmt = (ms)=> (ms/1000).toFixed(3) + " s";
 
-    function resetTimerSlots(){
-      glideTimes.length = 0;
-      glideActive = false; glideStart = 0; currentElapsed = 0;
-      scoreEma = 0; scoreStableSince = null; scoreLowSince = null;
-      lastTorso = null;
-    }
-
-    function armOverHeadRobust(raw) {
+    // REWORK: arms-over-head detection WITHOUT headCenter dependency.
+    // Use shoulders as stable reference; this fixes "stand arms up not triggering".
+    function armsUpScore(raw) {
       const ls = raw[11], rs = raw[12];
       const le = raw[13], re = raw[14];
       const lw = raw[15], rw = raw[16];
-      const head = headCenterNorm(raw);
       if (!ls || !rs) return 0;
 
       const shoulderY = (ls.y + rs.y) / 2;
-      const headY = (head?.y ?? (shoulderY - 0.10));
 
-      const elbowMargin = 0.04;
-      const wristMargin = 0.02;
+      // Hands/wrists clearly above shoulders
+      const wristMargin = 0.06;
+      const leftWristUp  = lw ? (lw.y < shoulderY - wristMargin) : false;
+      const rightWristUp = rw ? (rw.y < shoulderY - wristMargin) : false;
 
-      const leftWristUp = lw ? (lw.y < headY + wristMargin) : false;
-      const rightWristUp = rw ? (rw.y < headY + wristMargin) : false;
-
-      const leftElbowUp = le ? (le.y < shoulderY - elbowMargin) : false;
+      // Fallback: elbows above shoulders (if wrists are noisy)
+      const elbowMargin = 0.03;
+      const leftElbowUp  = le ? (le.y < shoulderY - elbowMargin) : false;
       const rightElbowUp = re ? (re.y < shoulderY - elbowMargin) : false;
 
-      const leftScore = leftWristUp ? 1.0 : (leftElbowUp ? 0.7 : 0.0);
+      const leftScore  = leftWristUp ? 1.0 : (leftElbowUp ? 0.7 : 0.0);
       const rightScore = rightWristUp ? 1.0 : (rightElbowUp ? 0.7 : 0.0);
 
+      // We take max: one arm might be occluded
       return Math.max(leftScore, rightScore);
     }
 
@@ -955,7 +887,7 @@
       const torso = { x:(sh.x+hp.x)/2, y:(sh.y+hp.y)/2 };
 
       const p = filmingPreset.value;
-      const tol = (p === "side45") ? 0.016 : 0.012;
+      const tol = (p === "side45") ? 0.016 : 0.012; // side45: allow more motion without killing score
 
       if (!lastTorso) { lastTorso = torso; return 0.3; }
       const move = Math.hypot(torso.x - lastTorso.x, torso.y - lastTorso.y);
@@ -966,57 +898,73 @@
     }
 
     function computeGlideScore(raw) {
-      const arms = armOverHeadRobust(raw);
+      const arms = armsUpScore(raw);         // NEW
       const legs = legsStraightScore(raw);
       const longB = bodyLongScore(raw);
       const still = stillnessScore(raw);
-      return (0.38*arms + 0.32*legs + 0.18*longB + 0.12*still);
+
+      // Slight rebalance: arms still important, but not too dominant.
+      return (0.34*arms + 0.34*legs + 0.20*longB + 0.12*still);
+    }
+
+    function resetTimerState(alsoSlots=false){
+      glideActive=false; glideStart=0; currentElapsed=0;
+      scoreEma=0; scoreStableSince=null; scoreLowSince=null;
+      lastTorso=null;
+      if(alsoSlots) glideTimes.length = 0;
     }
 
     function updateTimer(raw, now, isRecording){
       if(!toggleTimer.checked){
-        glideActive=false; currentElapsed=0;
-        scoreEma=0; scoreStableSince=null; scoreLowSince=null;
-        lastTorso=null;
+        resetTimerState(false);
         return;
       }
 
+      // only run while recording (as designed)
       if(!isRecording){
-        glideActive=false; currentElapsed=0;
-        scoreEma=0; scoreStableSince=null; scoreLowSince=null;
-        lastTorso=null;
+        resetTimerState(false);
         return;
       }
 
       const p = filmingPreset.value;
-      const startThr = (p === "side45") ? 0.70 : 0.75;
-      const stopThr  = (p === "side45") ? 0.52 : 0.58;
-      const startHoldMs = (p === "side45") ? 160 : 160;
+
+      // Make start easier & consistent (fix "won't trigger")
+      const startThr = (p === "side45") ? 0.62 : 0.68;
+      const stopThr  = (p === "side45") ? 0.48 : 0.56;
+
+      const startHoldMs = (p === "side45") ? 90 : 120;
       const stopHoldMs  = (p === "side45") ? 260 : 230;
       const hardMaxMs = (p === "stand") ? 5000 : 6500;
 
-      const alpha = (p === "side45") ? 0.66 : 0.60;
+      // Less sluggish EMA so brief peaks can start the timer.
+      const alpha = 0.50;
       const sNow = computeGlideScore(raw);
-      scoreEma = alpha*scoreEma + (1-alpha)*sNow;
+      if (scoreEma === 0) scoreEma = sNow;
+      else scoreEma = alpha*scoreEma + (1-alpha)*sNow;
 
+      // Stop conditions (more tolerant for side45)
       const lh = raw[23], rh = raw[24], lk = raw[25], rk = raw[26], la = raw[27], ra = raw[28];
       const aL = kneeAngle(lh, lk, la);
       const aR = kneeAngle(rh, rk, ra);
 
-      const kneesBend = ((aL != null && aL < (p==="side45" ? 152 : 158)) || (aR != null && aR < (p==="side45" ? 152 : 158)));
-      const armScore = armOverHeadRobust(raw);
-      const armsDropped = armScore < (p==="side45" ? 0.44 : 0.48);
+      const kneeStopThr = (p === "side45") ? 148 : 156;
+      const kneesBend = ((aL != null && aL < kneeStopThr) || (aR != null && aR < kneeStopThr));
+
+      const armS = armsUpScore(raw);
+      const armsDropped = armS < ((p === "side45") ? 0.35 : 0.45);
 
       const movementStop = kneesBend || armsDropped;
 
+      // START
       if(!glideActive){
         currentElapsed = 0;
-        if(scoreEma >= startThr && glideTimes.length < 4){
+        if(scoreEma >= startThr){
           if(scoreStableSince == null) scoreStableSince = now;
           if(now - scoreStableSince >= startHoldMs){
             glideActive = true;
             glideStart = now;
             scoreLowSince = null;
+            scoreStableSince = null;
           }
         } else {
           scoreStableSince = null;
@@ -1024,26 +972,27 @@
         return;
       }
 
+      // RUNNING
       currentElapsed = now - glideStart;
 
       if(currentElapsed >= hardMaxMs){
         glideActive = false;
         scoreStableSince = null;
         scoreLowSince = null;
-        glideTimes.push(currentElapsed);
-        if(glideTimes.length > 4) glideTimes.length = 4;
+        if(glideTimes.length < 4) glideTimes.push(currentElapsed);
         currentElapsed = 0;
         return;
       }
 
+      // MovementStop hold
       if(movementStop){
         if(scoreLowSince == null) scoreLowSince = now;
-        if(now - scoreLowSince >= (p==="side45" ? 140 : 90)){
+        const moveStopHold = (p === "side45") ? 170 : 110;
+        if(now - scoreLowSince >= moveStopHold){
           glideActive = false;
           scoreStableSince = null;
           scoreLowSince = null;
-          glideTimes.push(now - glideStart);
-          if(glideTimes.length > 4) glideTimes.length = 4;
+          if(glideTimes.length < 4) glideTimes.push(now - glideStart);
           currentElapsed = 0;
           return;
         }
@@ -1051,14 +1000,14 @@
         scoreLowSince = null;
       }
 
+      // ScoreStop hold
       if(scoreEma <= stopThr){
         if(scoreLowSince == null) scoreLowSince = now;
         if(now - scoreLowSince >= stopHoldMs){
           glideActive = false;
           scoreStableSince = null;
           scoreLowSince = null;
-          glideTimes.push(now - glideStart);
-          if(glideTimes.length > 4) glideTimes.length = 4;
+          if(glideTimes.length < 4) glideTimes.push(now - glideStart);
           currentElapsed = 0;
         }
       } else {
@@ -1098,7 +1047,7 @@
       ctx.shadowBlur=0;
 
       ctx.font = isPortrait ? "700 28px system-ui" : "700 24px system-ui";
-      ctx.fillText(glideActive ? (currentElapsed/1000).toFixed(3) + " s" : "0.000 s", x+12, y+(isPortrait?36:30));
+      ctx.fillText(glideActive ? fmt(currentElapsed) : "0.000 s", x+12, y+(isPortrait?36:30));
 
       ctx.font="600 12px system-ui";
       const presetLabel = filmingPreset.value==="stand" ? "Stand" : (filmingPreset.value==="side45" ? "45° seitlich" : "45° hinten");
@@ -1108,14 +1057,14 @@
       if (isPortrait) {
         const baseY = y + 80;
         for (let i=0;i<4;i++){
-          const t = glideTimes[i]!=null ? (glideTimes[i]/1000).toFixed(3) + " s" : "—";
+          const t = glideTimes[i]!=null ? fmt(glideTimes[i]) : "—";
           ctx.fillText(`Slot ${i+1}: ${t}`, x+12, baseY + i*16);
         }
       } else {
         const lineY = y + 72;
         const parts = [];
         for (let i=0;i<4;i++){
-          const t = glideTimes[i]!=null ? (glideTimes[i]/1000).toFixed(3) + " s" : "—";
+          const t = glideTimes[i]!=null ? fmt(glideTimes[i]) : "—";
           parts.push(`S${i+1}: ${t}`);
         }
         let cx = x + 12;
@@ -1153,6 +1102,20 @@
       ctx.restore();
     }
 
+    if (!CanvasRenderingContext2D.prototype.roundRect) {
+      CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
+        const rr = Math.min(r, w/2, h/2);
+        this.beginPath();
+        this.moveTo(x+rr, y);
+        this.arcTo(x+w, y, x+w, y+h, rr);
+        this.arcTo(x+w, y+h, x, y+h, rr);
+        this.arcTo(x, y+h, x, y, rr);
+        this.arcTo(x, y, x+w, y, rr);
+        this.closePath();
+        return this;
+      };
+    }
+
     // Recording + tips
     let recorder=null, recordedChunks=[], lastBlob=null;
     let isRecording = false;
@@ -1162,7 +1125,6 @@
       kneeWide:0, kneeAsym:0, legsBent:0,
       headExt:0, headFlex:0,
       avgKneeRatioSum:0, avgKneeRatioN:0,
-
       handWide:0,
       avgHandRatioSum:0, avgHandRatioN:0
     };
@@ -1187,19 +1149,21 @@
 
       if (p(recStats.kneeWide) >= thr) issues.push({ score:p(recStats.kneeWide), title:"Knie öffnen zu weit", tip:"Knie enger (≈ schulterbreit) anziehen – „Schere“ vermeiden." });
 
-      if (filmingPreset.value === "stand" && p(recStats.kneeAsym) >= thr) {
-        issues.push({ score:p(recStats.kneeAsym), title:"Beinschlag unsymmetrisch", tip:"Links/rechts ähnlich beugen/strecken – Symmetrie anstreben." });
+      // Asymmetry tip only if not side45 (perspective invalid)
+      if (filmingPreset.value !== "side45") {
+        if (p(recStats.kneeAsym) >= thr) issues.push({ score:p(recStats.kneeAsym), title:"Beinschlag unsymmetrisch", tip:"Links/rechts ähnlich beugen/strecken – Symmetrie anstreben." });
       }
 
       if (p(recStats.legsBent) >= thr) issues.push({ score:p(recStats.legsBent), title:"Beine nicht gestreckt in der Gleitphase", tip:"Nach dem Beinschlag vollständig strecken – kurz stabil gleiten." });
 
-      // Trigger später: erst > 1.75×
+      // Hand wide: tip only when really wide (your request)
       if (p(recStats.handWide) >= thr) issues.push({
         score:p(recStats.handWide),
-        title:"Arme/Hände im Zug zu weit geöffnet",
-        tip:"Beim Zug Ellbogen eher „hoch/außen“, Unterarme greifen Wasser; Hände nicht weit nach außen ziehen (Bremsfläche)."
+        title:"Armzug sehr breit („Oma-Zug“)",
+        tip:"Im Armzug nicht extrem nach außen aufmachen: Ellbogen eher „hoch“ halten und moderat öffnen (geringere Bremsfläche)."
       });
 
+      // Head tips only if profile
       if (p(recStats.headExt) >= thr) issues.push({ score:p(recStats.headExt), title:"Kopf überstreckt (HWS)", tip:"Nacken lang, Blick eher schräg nach unten/vorne (neutral)." });
       if (p(recStats.headFlex) >= thr) issues.push({ score:p(recStats.headFlex), title:"Kopf zu tief (HWS-Flexion)", tip:"Kopf neutral: Blick leicht nach vorn/unten, nicht „Kinn auf Brust“." });
 
@@ -1218,7 +1182,7 @@
         (avgKnee ? ` • Ø Knie/Schulter ${avgKnee.toFixed(2)}×` : "") +
         (avgHand ? ` • Ø Hand/Schulter ${avgHand.toFixed(2)}×` : "");
 
-      hintText.textContent = "In dieser Aufnahme waren folgende Punkte über mehrere Frames deutlich auffällig:";
+      hintText.textContent = "In dieser Aufnahme waren folgende Punkte über mehrere Frames auffällig:";
 
       for (const it of top) {
         const li = document.createElement("li");
@@ -1243,11 +1207,12 @@
     }
 
     function startRecordingCanvas(){
-      resetTimerSlots();
-      resetNeckState();
       recordedChunks=[]; lastBlob=null; btnShare.disabled=true;
       resetRecStats();
       isRecording = true;
+
+      // IMPORTANT: reset timer state + slots at new recording start (keeps behavior consistent)
+      resetTimerState(true);
 
       clearTipsUI();
 
@@ -1420,33 +1385,34 @@
               if (legs.kneeRatio > 1.55) recStats.kneeWide++;
             }
 
-            if (legs.validAsym && legs.kneeDiff != null && legs.kneeDiff > 25) recStats.kneeAsym++;
+            // Only count knee asymmetry if NOT side45 (perspective issue)
+            if (filmingPreset.value !== "side45") {
+              if (legs.kneeDiff != null && legs.kneeDiff > 25) recStats.kneeAsym++;
+            }
 
             if (hands.handRatio != null) {
               recStats.avgHandRatioSum += hands.handRatio;
               recStats.avgHandRatioN++;
-              if (hands.handRatio > 1.75) recStats.handWide++; // später triggern
+              // Tip trigger only for clearly too wide ("Oma")
+              if (hands.handRatio > 1.70) recStats.handWide++;
             }
 
             const [aL, aR] = legs.kneeAngles || [null,null];
             const bent = ((aL != null && aL < 155) || (aR != null && aR < 155));
             if (toggleTimer.checked && glideActive && bent) recStats.legsBent++;
 
-            if (toggleTimer.checked && glideActive && neck?.valid && neck?.state) {
+            // Head stats only if profile neck-check is active (otherwise unknown)
+            if (toggleTimer.checked && glideActive && neck?.state) {
               if (neck.state === "redExt") recStats.headExt++;
               if (neck.state === "redFlex") recStats.headFlex++;
             }
           }
 
-          const neckDbg = (neck && neck.neckDeg != null)
-            ? `neck=${neck.neckDeg.toFixed(1)}° d=${(neck.d??0).toFixed(1)} ${neck.state} prof=${neck.profile?1:0}`
-            : `neck=—`;
-
           const handDbg = (hands && hands.handRatio != null)
             ? `hand/shoulder=${hands.handRatio.toFixed(2)}`
             : `hand/shoulder=—`;
 
-          drawOverlay(`DEBUG: lm=${raw.length} mask=${hasMask?1:0} maskmax=${(maskInfo.max??0).toFixed(3)} ${handDbg} ${neckDbg} rec=${isRecording?1:0} ui=${isPortraitUI()?"P":"L"}`);
+          drawOverlay(`DEBUG: lm=${raw.length} mask=${hasMask?1:0} maskmax=${(maskInfo.max??0).toFixed(3)} score=${scoreEma.toFixed(2)} ${handDbg} rec=${isRecording?1:0} ui=${isPortraitUI()?"P":"L"}`);
         } else {
           drawOverlay(`DEBUG: lm=0 mask=${hasMask?1:0} maskmax=${(maskInfo.max??0).toFixed(3)} rec=${isRecording?1:0} ui=${isPortraitUI()?"P":"L"}`);
         }
@@ -1480,7 +1446,7 @@
         clearTipsUI();
         emptyMaskFrames = 0;
         resetNeckState();
-        resetTimerSlots();
+        resetTimerState(true);
 
         setStatus("bereit.");
         rafId = requestAnimationFrame(loop);
@@ -1503,9 +1469,9 @@
         smoothedCss = null;
         emptyMaskFrames = 0;
 
-        resetTimerSlots();
         clearTipsUI();
         resetNeckState();
+        resetTimerState(true);
 
         running=true;
         rafId = requestAnimationFrame(loop);
@@ -1536,41 +1502,10 @@
     btnShare.addEventListener("click", ()=>shareOrDownload());
 
     btnReset.addEventListener("click", ()=>{
-      resetTimerSlots();
+      resetTimerState(true);
       setStatus("Slots zurückgesetzt.");
       clearTipsUI();
       resetNeckState();
-    });
-
-    // Feedback form submit (AJAX, bleibt auf der Seite)
-    const fbForm = document.getElementById("feedbackForm");
-    const fbStatus = document.getElementById("feedbackStatus");
-    const fbBtn = document.getElementById("btnSendFeedback");
-
-    fbForm?.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      fbStatus.textContent = "";
-      fbBtn.disabled = true;
-
-      try {
-        const formData = new FormData(fbForm);
-        const res = await fetch(fbForm.action, {
-          method: "POST",
-          body: formData,
-          headers: { "Accept": "application/json" }
-        });
-
-        if (res.ok) {
-          fbStatus.innerHTML = `<span class="ok">Danke – Feedback wurde gesendet.</span>`;
-          fbForm.reset();
-        } else {
-          fbStatus.innerHTML = `<span class="err">Senden fehlgeschlagen. Bitte später erneut versuchen.</span>`;
-        }
-      } catch (err) {
-        fbStatus.innerHTML = `<span class="err">Netzwerkfehler. Bitte später erneut versuchen.</span>`;
-      } finally {
-        fbBtn.disabled = false;
-      }
     });
   </script>
 </body>
