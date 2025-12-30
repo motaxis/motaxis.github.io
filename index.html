@@ -8,61 +8,79 @@
   <style>
     :root{
       --bg: #bfe7ff;
+      --ink: #0f172a;
+      --muted: #475569;
       --card: #ffffff;
-      --border: #ddd;
-      --text: #111;
-      --muted: #555;
-      --accent: #0b6b0b;
+      --border: #e5e7eb;
+
+      /* Header/Intro Box (nicht blau) */
+      --introBg: #f8fafc;
+      --introBorder: #e2e8f0;
+      --accent: #111827;
     }
 
     body{
       font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
       margin: 16px;
-      color: var(--text);
+      color: var(--ink);
+      background: #fff;
     }
 
     .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
     .hint { color: var(--muted); font-size: 14px; line-height: 1.45; max-width: 1100px; }
 
-    /* Header (ein Schriftbild, nur Regular + Bold) */
-    .hero{
-      max-width: 1100px;
+    /* Header */
+    .header{
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 14px 14px 12px 14px;
       margin-bottom: 12px;
+      background: var(--card);
+      max-width: 1100px;
     }
     .brand{
-      margin: 0;
+      display:flex;
+      flex-direction:column;
+      gap: 2px;
+      margin-bottom: 10px;
+    }
+    .brand .logo{
       font-weight: 900;
-      font-size: 28px;
-      letter-spacing: 1.2px;
-      text-transform: uppercase;
+      letter-spacing: 1.6px;
+      font-size: 26px;
       line-height: 1.05;
-    }
-    .subbrand{
-      margin: 6px 0 0 0;
-      font-weight: 700;
-      font-size: 14px;
-      letter-spacing: 0.6px;
       text-transform: uppercase;
-      color: #1f2a33;
+      color: var(--accent);
     }
-    .heroBox{
-      margin-top: 10px;
-      background: var(--bg);
-      border: 1px solid #d6ecff;
-      border-radius: 14px;
-      padding: 12px 14px;
-      max-width: 980px;
-    }
-    .heroBox p{
-      margin: 0;
-      text-align: justify;
-      text-justify: inter-word;
-      font-size: 13.8px;
-      line-height: 1.5;
-      color: #1f2a33;
+    .brand .sub{
+      font-weight: 700;
+      letter-spacing: 0.6px;
+      font-size: 13px;
+      color: #334155;
+      text-transform: uppercase;
     }
 
-    .stack { display: grid; grid-template-columns: 1fr; gap: 12px; max-width: 1100px; }
+    .introBox{
+      border: 1px solid var(--introBorder);
+      border-radius: 14px;
+      padding: 12px 14px;
+      background: var(--introBg);
+    }
+    .introBox p{
+      margin: 0;
+      color: #1f2a33;
+      font-size: 13.75px;
+      line-height: 1.45;
+      text-align: justify; /* Blocksatz */
+      text-justify: inter-word;
+    }
+
+    .stack{
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+      max-width: 1100px;
+    }
 
     .block{
       border: 1px solid var(--border);
@@ -74,7 +92,7 @@
       font-weight: 800;
       margin: 0 0 10px 0;
       font-size: 13px;
-      color: #222;
+      color: #0b1220;
       letter-spacing: 0.2px;
     }
 
@@ -84,7 +102,11 @@
       padding: 10px 12px;
       background: var(--card);
     }
-    summary{ cursor: pointer; font-weight: 800; }
+    summary{
+      cursor: pointer;
+      font-weight: 800;
+      color: #0b1220;
+    }
 
     label{
       display: inline-flex;
@@ -93,23 +115,30 @@
       padding: 8px 10px;
       border: 1px solid var(--border);
       border-radius: 10px;
-      background: #fff;
+      background: var(--card);
+      font-size: 14px;
     }
     select{
       padding: 9px 12px;
       border-radius: 10px;
-      border: 1px solid #ccc;
-      background: #fff;
+      border: 1px solid #cbd5e1;
+      background: var(--card);
+      font: inherit;
+      color: #0b1220;
     }
 
     button{
       padding: 10px 14px;
       border-radius: 10px;
-      border: 1px solid #ccc;
-      background: #fff;
-      font-weight: 600;
+      border: 1px solid #cbd5e1;
+      background: var(--card);
+      font: inherit;
+      color: #0b1220;
     }
-    button.primary{ border-color: #111; }
+    button.primary{
+      border-color: #0b1220;
+      font-weight: 700;
+    }
     button:disabled{ opacity: 0.5; }
 
     .btnRow{ display:flex; gap:10px; flex-wrap: wrap; }
@@ -143,17 +172,17 @@
       border-radius: 10px;
       margin-top: 10px;
       flex-wrap: wrap;
-      background:#fff;
+      background: var(--card);
     }
-    .rangeWrap span{ min-width: 170px; font-size: 13px; color:#666; }
-    .small{ font-size: 13px; color:#666; min-width: 64px; text-align:right; }
+    .rangeWrap span{ min-width: 170px; font-size: 13px; color:#475569; }
+    .small{ font-size: 13px; color:#475569; min-width: 64px; text-align:right; }
 
     .tipsBox{
       margin-top: 10px;
-      border: 2px solid rgba(11,107,11,0.35);
+      border: 2px solid #16a34a; /* farbig abheben */
       border-radius: 12px;
       padding: 10px 12px;
-      background: rgba(11,107,11,0.05);
+      background: #f0fdf4;
       display: none;
       max-width: 1100px;
     }
@@ -163,10 +192,10 @@
       display: inline-block;
       padding: 2px 8px;
       border-radius: 999px;
-      border: 1px solid var(--border);
+      border: 1px solid #bbf7d0;
       font-size: 12px;
-      color: #444;
-      background: #fff;
+      color: #14532d;
+      background: #ecfdf5;
       margin-left: 6px;
     }
 
@@ -177,29 +206,31 @@
       width: 100%;
       padding: 10px 12px;
       border-radius: 10px;
-      border: 1px solid #ccc;
+      border: 1px solid #cbd5e1;
       font: inherit;
       background: #fff;
       box-sizing: border-box;
     }
     .fbRow textarea{ min-height: 120px; resize: vertical; }
-    .fbFine{ font-size: 12.5px; color:#666; line-height:1.35; }
-    .fbStatus{ font-size: 13px; color:#333; margin-top: 6px; display:none; }
+    .fbFine{ font-size: 12.5px; color:#64748b; line-height:1.35; }
+    .fbStatus{ font-size: 13px; color:#334155; margin-top: 6px; display:none; }
     .fbStatus.ok{ color: #0b6b0b; }
     .fbStatus.err{ color: #a10000; }
 
-    #status{ margin-top: 12px; }
+    #status{ margin-top: 12px; max-width: 1100px; }
   </style>
 </head>
 
 <body>
-  <div class="hero">
-    <h1 class="brand">MOTAXIS</h1>
-    <div class="subbrand">ANONYME BEWEGUNGSANALYSE</div>
-    <div class="heroBox">
+  <div class="header">
+    <div class="brand">
+      <div class="logo">MOTAXIS</div>
+      <div class="sub">Anonyme Bewegungsanalyse</div>
+    </div>
+    <div class="introBox">
       <p>
         Beta-Version zur anonymen Aufnahme und Analyse von Skelettachsen und Bewegungen (Pose-Landmarks).
-        Bislang optimiert für Brustschwimmen; Auswertungen sind experimentell und können je nach Aufnahmebedingungen variieren.
+        Bislang optimiert für Brustschwimmen. Auswertungen sind experimentell und können je nach Aufnahmebedingungen variieren.
       </p>
     </div>
   </div>
@@ -215,7 +246,7 @@
       </div>
     </div>
 
-    <!-- Anzeige (allgemein) standardmäßig ausgeklappt -->
+    <!-- Anzeige by default ausgeklappt -->
     <details id="displayBox" open>
       <summary>Anzeige (allgemein)</summary>
 
@@ -230,7 +261,7 @@
         </select>
       </div>
 
-      <!-- Erweiterte Einstellungen NICHT standardmäßig ausgeklappt -->
+      <!-- Erweiterte Einstellungen NICHT open -->
       <details id="advancedBox" style="margin-top:10px;">
         <summary>Erweiterte Einstellungen</summary>
 
@@ -293,8 +324,8 @@
 
         <div class="rangeWrap">
           <span>HWS – Grün-Toleranz (°)</span>
-          <input id="neckTol" type="range" min="6" max="35" step="1" value="18">
-          <span id="neckTolVal" class="small">18</span>
+          <input id="neckTol" type="range" min="6" max="35" step="1" value="14">
+          <span id="neckTolVal" class="small">14</span>
         </div>
 
         <div class="rangeWrap">
@@ -305,8 +336,8 @@
 
         <div class="rangeWrap">
           <span>HWS – Rot-Schwelle extra (°)</span>
-          <input id="neckRedExtra" type="range" min="0" max="20" step="1" value="8">
-          <span id="neckRedExtraVal" class="small">8</span>
+          <input id="neckRedExtra" type="range" min="0" max="20" step="1" value="6">
+          <span id="neckRedExtraVal" class="small">6</span>
         </div>
 
         <div class="rangeWrap">
@@ -317,9 +348,10 @@
 
         <div class="rangeWrap">
           <span>HWS – Hold (ms)</span>
-          <input id="neckHold" type="range" min="80" max="350" step="10" value="200">
-          <span id="neckHoldVal" class="small">200</span>
+          <input id="neckHold" type="range" min="80" max="350" step="10" value="180">
+          <span id="neckHoldVal" class="small">180</span>
         </div>
+
       </details>
     </details>
 
@@ -327,18 +359,17 @@
       <summary>Brustschwimmen-Tools (spezifisch)</summary>
 
       <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap;">
-        <label><input type="checkbox" id="toggleNeck" checked /> HWS-Achse (Brust)</label>
-        <label><input type="checkbox" id="toggleLegCheck" checked /> Knie/Beine-Check (Brust)</label>
+        <label><input type="checkbox" id="toggleNeck" checked /> HWS-Achse</label>
+        <label><input type="checkbox" id="toggleLegCheck" checked /> Knie/Beine-Check</label>
         <label><input type="checkbox" id="toggleHandAxis" checked /> Hand-Achse (Armzug)</label>
-        <label><input type="checkbox" id="toggleTimer" checked /> Timer Brust – Gleitphase</label>
+        <label><input type="checkbox" id="toggleTimer" checked /> Timer – Gleitphase</label>
         <label><input type="checkbox" id="toggleHintBox" checked /> Techniktipps nach Stop</label>
       </div>
 
       <details style="margin-top:10px;">
         <summary>Technik-Checkliste (Brust)</summary>
         <p class="hint">
-          Hinweise sind experimentell. Perspektive beeinflusst Messbarkeit. Bei stark frontalem Blick ist eine farbliche HWS-Bewertung nicht valide;
-          die Achse wird dann neutral dargestellt.
+          Hinweise sind experimentell. Perspektive beeinflusst Messbarkeit. Bei stark frontalem Blick sind Nacken-/HWS-Aussagen nicht valide.
         </p>
         <details>
           <summary>Knie öffnen zu weit („Schere“ / Bremsfläche)</summary>
@@ -357,7 +388,7 @@
         </details>
         <details>
           <summary>Kopf (HWS) – neutral vs. Flexion/Extension</summary>
-          <p class="hint">Farbliche Bewertung nur bei Profilansicht. Tipp „Überstreckung“ nur bei häufigem oder langem Auftreten.</p>
+          <p class="hint">Nur bei eher seitlicher Ansicht sinnvoll. Bei frontalem Blick wird die HWS-Linie neutral angezeigt (grau), aber nicht bewertet.</p>
         </details>
         <details>
           <summary>Gleitphase zu kurz</summary>
@@ -446,7 +477,6 @@
     const toggleNeck = document.getElementById("toggleNeck");
     const toggleLegCheck = document.getElementById("toggleLegCheck");
     const toggleHandAxis = document.getElementById("toggleHandAxis");
-
     const toggleTimer = document.getElementById("toggleTimer");
     const toggleHintBox = document.getElementById("toggleHintBox");
     const filmingPreset = document.getElementById("filmingPreset");
@@ -735,7 +765,7 @@
       return info;
     }
 
-    // Head center helpers
+    // Head center (used for neck rendering)
     function headCenterNorm(raw) {
       const le = raw[7], re = raw[8];
       const lEye = raw[2], rEye = raw[5];
@@ -743,6 +773,7 @@
       if (lEye && rEye) return { x:(lEye.x+rEye.x)/2, y:(lEye.y+rEye.y)/2 };
       return null;
     }
+
     function headCenterCss(cssPoints) {
       const le = cssPoints[7], re = cssPoints[8];
       const lEye = cssPoints[2], rEye = cssPoints[5];
@@ -751,6 +782,7 @@
       return null;
     }
 
+    // "Profile likely" heuristic
     function isProfileLikely(raw){
       const ls = raw[11], rs = raw[12];
       if(!ls || !rs) return false;
@@ -770,9 +802,9 @@
       return 1;
     }
 
-    // --- HWS state (always draw axis; color only when profile)
+    // --- HWS state: ALWAYS draw line, but only color-evaluate when profile
     let neckAngleEma = null;
-    let neckState = "unknown";
+    let neckState = "unknown"; // green | amber | redFlex | redExt | neutral
     let neckSince = 0;
     let neckNeutralAuto = null;
     let neckCalibSamples = [];
@@ -791,125 +823,103 @@
       }
 
       const ls = rawNorm[11], rs = rawNorm[12];
-      if (!ls || !rs) {
+      const lh = rawNorm[23], rh = rawNorm[24];
+      if (!ls || !rs || !lh || !rh) {
         return { neckDeg: null, state: "unknown", neutral: null, d: null, profile:false, facing:1 };
       }
 
       const shoulder = { x:(ls.x+rs.x)/2, y:(ls.y+rs.y)/2 };
-      const headN = headCenterNorm(rawNorm);
-
-      const cssLs = cssPoints[11], cssRs = cssPoints[12];
-      const cssHead = headCenterCss(cssPoints);
-
-      if (!cssLs || !cssRs || !cssHead) {
+      const head     = headCenterNorm(rawNorm);
+      if (!head) {
         return { neckDeg: null, state: "unknown", neutral: null, d: null, profile:false, facing:1 };
       }
-
-      const cssShoulder = { _cx:(cssLs._cx+cssRs._cx)/2, _cy:(cssLs._cy+cssRs._cy)/2 };
 
       const profile = isProfileLikely(rawNorm);
+      const facing  = estimateFacingSign(rawNorm, head, shoulder);
 
-      // Default: draw neutral axis always (gray) if no reliable head
-      if (!headN) {
-        ctx.save();
-        ctx.lineCap = "round";
-        ctx.lineWidth = 6;
-        ctx.setLineDash([10, 8]);
-        ctx.strokeStyle = "rgba(0,0,0,0.35)";
-        ctx.beginPath();
-        ctx.moveTo(cssShoulder._cx, cssShoulder._cy);
-        ctx.lineTo(cssHead._cx, cssHead._cy);
-        ctx.stroke();
-        ctx.restore();
-        return { neckDeg: null, state: "unknown", neutral: null, d: null, profile:false, facing:1 };
-      }
+      // Compute angle ONLY if profile; otherwise keep neutral display
+      let ang = null;
+      let neutral = null;
+      let d = null;
 
-      // If not profile: keep axis gray (no colored evaluation)
-      if (!profile) {
-        ctx.save();
-        ctx.lineCap = "round";
-        ctx.lineWidth = 6;
-        ctx.setLineDash([10, 8]);
-        ctx.strokeStyle = "rgba(0,0,0,0.45)";
-        ctx.beginPath();
-        ctx.moveTo(cssShoulder._cx, cssShoulder._cy);
-        ctx.lineTo(cssHead._cx, cssHead._cy);
-        ctx.stroke();
-        ctx.restore();
-        return { neckDeg: neckAngleEma, state: "unknown", neutral: null, d: null, profile:false, facing:1 };
-      }
+      if (profile) {
+        const neckV = normVec({ x: head.x - shoulder.x, y: head.y - shoulder.y });
+        const up = { x: 0, y: -1 };
+        ang = signedAngleDeg(up, neckV);
+        if (facing < 0) ang = -ang;
 
-      // Profile: compute angle + colored state
-      const facing  = estimateFacingSign(rawNorm, headN, shoulder);
-      const neckV = normVec({ x: headN.x - shoulder.x, y: headN.y - shoulder.y });
+        const alpha = Number(neckEma.value);
+        if (neckAngleEma == null) neckAngleEma = ang;
+        else neckAngleEma = alpha*neckAngleEma + (1-alpha)*ang;
 
-      const up = { x: 0, y: -1 };
-      let ang = signedAngleDeg(up, neckV);
-      if (facing < 0) ang = -ang;
+        const neutralManual = Number(neckNeutral.value);
+        neutral = (neckNeutralAuto != null) ? neckNeutralAuto : neutralManual;
 
-      const alpha = Number(neckEma.value);
-      if (neckAngleEma == null) neckAngleEma = ang;
-      else neckAngleEma = alpha*neckAngleEma + (1-alpha)*ang;
-
-      const neutralManual = Number(neckNeutral.value);
-      let neutral = (neckNeutralAuto != null) ? neckNeutralAuto : neutralManual;
-
-      if (filmingPreset.value === "stand") {
-        const d0 = neckAngleEma - neutralManual;
-        if (Math.abs(d0) < 22 && neckCalibSamples.length < 45) {
-          neckCalibSamples.push(neckAngleEma);
-          if (neckCalibSamples.length === 45) {
-            const sorted = neckCalibSamples.slice().sort((a,b)=>a-b);
-            neckNeutralAuto = sorted[Math.floor(sorted.length/2)];
-            neutral = neckNeutralAuto;
+        if (filmingPreset.value === "stand") {
+          const d0 = neckAngleEma - neutralManual;
+          if (Math.abs(d0) < 22 && neckCalibSamples.length < 45) {
+            neckCalibSamples.push(neckAngleEma);
+            if (neckCalibSamples.length === 45) {
+              const sorted = neckCalibSamples.slice().sort((a,b)=>a-b);
+              neckNeutralAuto = sorted[Math.floor(sorted.length/2)];
+              neutral = neckNeutralAuto;
+            }
           }
+          if (neckNeutralAuto != null) neutral = neckNeutralAuto;
         }
-        if (neckNeutralAuto != null) neutral = neckNeutralAuto;
-      }
 
-      // Aggressiver: Rot früher (kleiner Abstand zwischen Grün und Rot)
-      const greenTol = Number(neckTol.value);
-      const redExtra = Number(neckRedExtra.value);
+        const greenTol = Number(neckTol.value);
+        const redExtra = Number(neckRedExtra.value);
+        const flexThr = greenTol + redExtra;
+        const extThr  = greenTol + redExtra;
 
-      // vorher: greenTol + redExtra; jetzt: greenTol + max(2, 0.45*redExtra)
-      const redAddon = Math.max(2, 0.45 * redExtra);
-      const flexThr = greenTol + redAddon;
-      const extThr  = greenTol + redAddon;
+        d = neckAngleEma - neutral;
 
-      const d = neckAngleEma - neutral;
+        let want = "amber";
+        if (Math.abs(d) <= greenTol) want = "green";
+        else if (d >=  flexThr) want = "redFlex";
+        else if (d <= -extThr)  want = "redExt";
 
-      let want = "amber";
-      if (Math.abs(d) <= greenTol) want = "green";
-      else if (d >=  flexThr) want = "redFlex";
-      else if (d <= -extThr)  want = "redExt";
-
-      const HOLD_MS = Number(neckHold.value);
-      if (want !== neckState) {
-        if (!neckSince) neckSince = nowTs;
-        if (nowTs - neckSince >= HOLD_MS) {
-          neckState = want;
+        const HOLD_MS = Number(neckHold.value);
+        if (want !== neckState) {
+          if (!neckSince) neckSince = nowTs;
+          if (nowTs - neckSince >= HOLD_MS) {
+            neckState = want;
+            neckSince = 0;
+          }
+        } else {
           neckSince = 0;
         }
       } else {
+        neckState = "neutral";
         neckSince = 0;
+        // don't disturb EMA calibration when frontal
       }
 
-      let stroke = "rgba(255,140,0,0.95)";
-      if (neckState === "green") stroke = "rgba(0,180,0,0.95)";
-      if (neckState === "redFlex" || neckState === "redExt") stroke = "rgba(220,0,0,0.95)";
+      // Draw axis ALWAYS (neutral grey if not profile)
+      const cssLs = cssPoints[11], cssRs = cssPoints[12];
+      const cssShoulder = (cssLs && cssRs) ? { _cx:(cssLs._cx+cssRs._cx)/2, _cy:(cssLs._cy+cssRs._cy)/2 } : null;
+      const cssHead = headCenterCss(cssPoints);
 
-      ctx.save();
-      ctx.lineCap = "round";
-      ctx.lineWidth = 6;
-      ctx.setLineDash([]); // farbig = solide
-      ctx.strokeStyle = stroke;
-      ctx.beginPath();
-      ctx.moveTo(cssShoulder._cx, cssShoulder._cy);
-      ctx.lineTo(cssHead._cx, cssHead._cy);
-      ctx.stroke();
-      ctx.restore();
+      if (cssShoulder && cssHead) {
+        let stroke = "rgba(120,120,120,0.85)"; // neutral grey
+        if (profile) {
+          stroke = "rgba(255,140,0,0.95)";
+          if (neckState === "green") stroke = "rgba(0,180,0,0.95)";
+          if (neckState === "redFlex" || neckState === "redExt") stroke = "rgba(220,0,0,0.95)";
+        }
+        ctx.save();
+        ctx.lineCap = "round";
+        ctx.lineWidth = 6;
+        ctx.strokeStyle = stroke;
+        ctx.beginPath();
+        ctx.moveTo(cssShoulder._cx, cssShoulder._cy);
+        ctx.lineTo(cssHead._cx, cssHead._cy);
+        ctx.stroke();
+        ctx.restore();
+      }
 
-      return { neckDeg: neckAngleEma, state: neckState, neutral, d, profile:true, facing };
+      return { neckDeg: (profile ? neckAngleEma : null), state: neckState, neutral, d, profile, facing };
     }
 
     // Knee/leg checks
@@ -920,21 +930,16 @@
     }
 
     function drawLegChecks(raw, cssPoints) {
-      if (!toggleLegCheck.checked || !raw || !cssPoints) return { kneeRatio: null, kneeDiff: null, kneeAngles: [null,null], valid:false };
+      if (!toggleLegCheck.checked || !raw || !cssPoints) return { kneeRatio: null, kneeDiff: null, kneeAngles: [null,null], valid: false };
 
       const kL = cssPoints[25], kR = cssPoints[26];
       const sL = cssPoints[11], sR = cssPoints[12];
-      if (!kL || !kR || !sL || !sR) return { kneeRatio: null, kneeDiff: null, kneeAngles: [null,null], valid:false };
 
-      const conf = (p) => {
-        const v = (p && typeof p.visibility === "number") ? p.visibility : 1;
-        const pr = (p && typeof p.presence === "number") ? p.presence : 1;
-        return Math.min(v, pr);
-      };
-      const kConf = Math.min(conf(raw[25]), conf(raw[26]));
-      const hConf = Math.min(conf(raw[23]), conf(raw[24]));
-      const aConf = Math.min(conf(raw[27]), conf(raw[28]));
-      const valid = (kConf >= 0.35 && hConf >= 0.25); // ankels optional für asym check
+      // Validity: need both knees + both shoulders with decent visibility
+      const okVis = (p)=> (p && (typeof p.visibility !== "number" || p.visibility >= 0.20));
+      const valid = !!(kL && kR && sL && sR && okVis(kL) && okVis(kR) && okVis(sL) && okVis(sR));
+
+      if (!valid) return { kneeRatio: null, kneeDiff: null, kneeAngles: [null,null], valid: false };
 
       const shoulderW = distPx(sL, sR);
       const kneeW = distPx(kL, kR);
@@ -943,7 +948,7 @@
       const lh = raw[23], rh = raw[24], lk = raw[25], rk = raw[26], la = raw[27], ra = raw[28];
       const aL = kneeAngle(lh, lk, la);
       const aR = kneeAngle(rh, rk, ra);
-      const diff = (aL != null && aR != null && aConf >= 0.25) ? Math.abs(aL - aR) : null;
+      const diff = (aL != null && aR != null) ? Math.abs(aL - aR) : null;
 
       if (kneeRatio != null) {
         ctx.save();
@@ -959,10 +964,10 @@
         ctx.restore();
       }
 
-      return { kneeRatio, kneeDiff: diff, kneeAngles: [aL, aR], valid };
+      return { kneeRatio, kneeDiff: diff, kneeAngles: [aL, aR], valid: true };
     }
 
-    // Hand axis thresholds (Armzug): Grün <= 2.10, Orange <= 2.50, Rot > 2.50
+    // Hand axis (only OUTSIDE glide phase + more tolerance):
     function colorForHandRatio(r) {
       if (r <= 2.10) return "rgba(0,170,0,0.95)";
       if (r <= 2.50) return "rgba(255,140,0,0.95)";
@@ -976,52 +981,63 @@
     const glideTimes = [];
     const fmt = (ms)=> (ms/1000).toFixed(3) + " s";
 
-    // Arms-up score: robust (one good arm is enough; choose best by conf/score)
-    function armsUpScore(raw) {
+    // Streamline/Arm-Streck Score entlang Körperachse (ein Arm reicht)
+    function armsStreamlineScore(raw) {
       const ls = raw[11], rs = raw[12];
+      const lh = raw[23], rh = raw[24];
       const le = raw[13], re = raw[14];
       const lw = raw[15], rw = raw[16];
 
-      const vis = (p) => (p && typeof p.visibility === "number") ? p.visibility : 1;
-      const pres = (p) => (p && typeof p.presence === "number") ? p.presence : 1;
-      const conf = (p) => Math.min(vis(p), pres(p));
+      if (!ls || !rs || !lh || !rh) return 0;
 
-      if (!ls || !rs) return 0;
+      const sh = { x:(ls.x+rs.x)/2, y:(ls.y+rs.y)/2 };
+      const hp = { x:(lh.x+rh.x)/2, y:(lh.y+rh.y)/2 };
 
-      const shoulderY = (ls.y + rs.y) / 2;
+      // Körperachse Richtung Kopf (Hip -> Shoulder)
+      let axis = { x: sh.x - hp.x, y: sh.y - hp.y };
+      const axisLen = Math.hypot(axis.x, axis.y) || 1e-6;
+      axis = { x: axis.x/axisLen, y: axis.y/axisLen };
 
-      // Side view tolerant
-      const wristMargin = 0.055;
-      const elbowMargin = 0.028;
+      // Normierung über Torso-Länge
+      const torsoLen = dist(sh, hp) || 1e-6;
 
-      const armScore = (elbow, wrist, shoulderRef) => {
-        const cW = conf(wrist);
-        const cE = conf(elbow);
-        const cS = conf(shoulderRef);
+      // Ellenbogenwinkel (Streckung) – analog zur kneeAngle-Helper-Funktion
+      const leftElbowAng  = kneeAngle(ls, le, lw);
+      const rightElbowAng = kneeAngle(rs, re, rw);
 
-        const armConf = Math.min(Math.max(cW, cE), cS);
-        if (armConf < 0.35) return { score: 0, conf: armConf };
-
-        const wristUp = wrist ? (wrist.y < shoulderY - wristMargin) : false;
-        const elbowUp = elbow ? (elbow.y < shoulderY - elbowMargin) : false;
-
-        let s = 0;
-        if (wristUp) s = 1.0;
-        else if (elbowUp) s = 0.75;
-
-        s *= Math.min(1, Math.max(0.6, armConf + 0.25));
-        return { score: s, conf: armConf };
+      const elbowScore = (ang) => {
+        if (ang == null) return 0;
+        if (ang <= 150) return 0;
+        if (ang >= 170) return 1;
+        return (ang - 150) / (170 - 150);
       };
 
-      const left  = armScore(le, lw, ls);
-      const right = armScore(re, rw, rs);
+      const oneArmScore = (w, s, eAng) => {
+        if (!w || !s) return 0;
 
-      const pick =
-        (left.score === right.score)
-          ? (left.conf >= right.conf ? left : right)
-          : (left.score > right.score ? left : right);
+        // Projektion des Wrist-Vektors auf Körperachse (in Torso-Längen)
+        const v = { x: w.x - s.x, y: w.y - s.y };
+        const along = (v.x*axis.x + v.y*axis.y) / torsoLen;
 
-      return pick.score;
+        // Seitliche Abweichung (mild penalize)
+        const perp = Math.abs(v.x*(-axis.y) + v.y*(axis.x)) / torsoLen;
+
+        const alongScore = (along <= 0.45) ? 0
+          : (along >= 0.95) ? 1
+          : (along - 0.45) / (0.95 - 0.45);
+
+        const perpPenalty =
+          (perp <= 0.85) ? 1 :
+          (perp >= 1.25) ? 0.55 :
+          1 - (perp - 0.85)/(1.25-0.85)*0.45;
+
+        return alongScore * perpPenalty * (0.55 + 0.45*elbowScore(eAng));
+      };
+
+      const left  = oneArmScore(lw, ls, leftElbowAng);
+      const right = oneArmScore(rw, rs, rightElbowAng);
+
+      return Math.max(left, right);
     }
 
     function legsStraightScore(raw) {
@@ -1071,12 +1087,11 @@
     }
 
     function computeGlideScore(raw) {
-      const arms = armsUpScore(raw);
+      const arms = armsStreamlineScore(raw);
       const legs = legsStraightScore(raw);
       const longB = bodyLongScore(raw);
       const still = stillnessScore(raw);
-      // Arm etwas stärker gewichtet (Startsignal in Seitenansicht)
-      return (0.44*arms + 0.30*legs + 0.16*longB + 0.10*still);
+      return (0.36*arms + 0.34*legs + 0.18*longB + 0.12*still);
     }
 
     function resetTimerState(alsoSlots=false){
@@ -1091,12 +1106,13 @@
       if(!isRecording){ resetTimerState(false); return; }
 
       const p = filmingPreset.value;
-      // Start: side45 + stand etwas früher
-      const startThr = (p === "side45") ? 0.58 : (p === "stand" ? 0.64 : 0.68);
-      const stopThr  = (p === "side45") ? 0.48 : 0.56;
 
-      const startHoldMs = (p === "side45") ? 90 : 120;
-      const stopHoldMs  = (p === "side45") ? 260 : 230;
+      // Side45: leichter startbar, geduldiger stoppen
+      const startThr = (p === "side45") ? 0.60 : 0.68;
+      const stopThr  = (p === "side45") ? 0.46 : 0.56;
+
+      const startHoldMs = (p === "side45") ? 100 : 120;
+      const stopHoldMs  = (p === "side45") ? 300 : 230;
       const hardMaxMs = (p === "stand") ? 5000 : 6500;
 
       const alpha = 0.50;
@@ -1111,10 +1127,12 @@
       const kneeStopThr = (p === "side45") ? 148 : 156;
       const kneesBend = ((aL != null && aL < kneeStopThr) || (aR != null && aR < kneeStopThr));
 
-      const armS = armsUpScore(raw);
-      const armsDropped = armS < ((p === "side45") ? 0.30 : 0.42); // etwas toleranter side45
+      // Arms dropped via streamline score
+      const armS = armsStreamlineScore(raw);
+      const armsDropped = armS < ((p === "side45") ? 0.30 : 0.42);
 
-      const movementStop = kneesBend || armsDropped;
+      // Key: side45 movementStop OFF (wie in der stabileren älteren Logik)
+      const movementStop = (p === "side45") ? false : (kneesBend || armsDropped);
 
       if(!glideActive){
         currentElapsed = 0;
@@ -1145,7 +1163,7 @@
 
       if(movementStop){
         if(scoreLowSince == null) scoreLowSince = now;
-        const moveStopHold = (p === "side45") ? 170 : 110;
+        const moveStopHold = 110;
         if(now - scoreLowSince >= moveStopHold){
           glideActive = false;
           scoreStableSince = null;
@@ -1175,12 +1193,17 @@
     // Hand-axis drawing + measurement (GATED: only when NOT glideActive)
     function drawHandAxis(raw, cssPoints) {
       if (toggleTimer.checked && glideActive) return { handRatio: null, gated: true };
+
       if (!toggleHandAxis.checked || !raw || !cssPoints) return { handRatio: null, gated: false };
 
       const wL = cssPoints[15];
       const wR = cssPoints[16];
       const sL = cssPoints[11], sR = cssPoints[12];
-      if (!wL || !wR || !sL || !sR) return { handRatio: null, gated: false };
+
+      const okVis = (p)=> (p && (typeof p.visibility !== "number" || p.visibility >= 0.20));
+      if (!wL || !wR || !sL || !sR || !okVis(wL) || !okVis(wR) || !okVis(sL) || !okVis(sR)) {
+        return { handRatio: null, gated: false };
+      }
 
       const shoulderW = distXPx(sL, sR);
       const handW = distXPx(wL, wR);
@@ -1234,12 +1257,12 @@
       ctx.fillStyle="white";
       ctx.shadowBlur=0;
 
-      ctx.font = isPortrait ? "700 28px system-ui" : "700 24px system-ui";
+      ctx.font = isPortrait ? "800 28px system-ui" : "800 24px system-ui";
       ctx.fillText(glideActive ? fmt(currentElapsed) : "0.000 s", x+12, y+(isPortrait?36:30));
 
-      ctx.font="600 12px system-ui";
+      ctx.font="700 12px system-ui";
       const presetLabel = filmingPreset.value==="stand" ? "Stand" : (filmingPreset.value==="side45" ? "45° seitlich" : "45° hinten");
-      ctx.fillText(`Timer Brust – Gleitphase | Aufnahme: ${presetLabel}`, x+12, y+(isPortrait?56:48));
+      ctx.fillText(`Timer – Gleitphase | Aufnahme: ${presetLabel}`, x+12, y+(isPortrait?56:48));
 
       ctx.font = isPortrait ? "14px system-ui" : "13px system-ui";
       if (isPortrait) {
@@ -1313,21 +1336,17 @@
     const HAND_RED_THR = 2.50;
     const HAND_STREAK_FRAMES = 8;
 
-    // HWS extension streak (ms) for tip gating
+    // HWS extension streak (count tip only if long or frequent)
     let headExtStreakStart = null;
 
     const recStats = {
       frames:0,
       kneeWide:0, kneeAsym:0, legsBent:0,
-
-      // HWS counts (only when glideActive)
       headExtAny:0,
       headExtStreakMsMax:0,
       headFlex:0,
-
       avgKneeRatioSum:0, avgKneeRatioN:0,
 
-      // Hand metrics during arm-pull only
       armPullFrames: 0,
       handWideFrames: 0
     };
@@ -1360,7 +1379,7 @@
         issues.push({ score:p(recStats.kneeWide), title:"Knie öffnen zu weit", tip:"Knie enger (≈ schulterbreit) anziehen – „Schere“ vermeiden." });
       }
 
-      // Unsymmetrie nur zählen, wenn Beine valide (im Bild / hinreichende Konfidenz)
+      // Unsymmetrie nur, wenn die Knie tatsächlich valide waren (und nicht side45)
       if (filmingPreset.value !== "side45") {
         if (p(recStats.kneeAsym) >= thr) {
           issues.push({ score:p(recStats.kneeAsym), title:"Beinschlag unsymmetrisch", tip:"Links/rechts ähnlich beugen/strecken – Symmetrie anstreben." });
@@ -1371,7 +1390,6 @@
         issues.push({ score:p(recStats.legsBent), title:"Beine nicht gestreckt in der Gleitphase", tip:"Nach dem Beinschlag vollständig strecken – kurz stabil gleiten." });
       }
 
-      // Hand issue only based on arm-pull window
       const armPullDen = Math.max(1, recStats.armPullFrames);
       const handWideShare = recStats.handWideFrames / armPullDen;
       if (handWideShare >= 0.18) {
@@ -1382,12 +1400,7 @@
         });
       }
 
-      // HWS: Flexion (optional weiterhin)
-      if (p(recStats.headFlex) >= thr) {
-        issues.push({ score:p(recStats.headFlex), title:"Kopf zu tief (HWS-Flexion)", tip:"Kopf neutral: Blick leicht nach vorn/unten, nicht „Kinn auf Brust“." });
-      }
-
-      // HWS: Überstreckung – Tipp nur wenn häufig ODER lange am Stück
+      // HWS: Überstreckung nur, wenn häufig oder lange
       const extShare = p(recStats.headExtAny);
       const extStreak = recStats.headExtStreakMsMax || 0;
       if (extShare >= thr || extStreak >= 700) {
@@ -1396,6 +1409,10 @@
           title:"Kopf häufig/zu lange überstreckt (HWS)",
           tip:"Neutral halten: Nacken lang, Blick schräg nach unten/vorn. Häufige/andauernde Überstreckung bremst und belastet die HWS."
         });
+      }
+
+      if (p(recStats.headFlex) >= thr) {
+        issues.push({ score:p(recStats.headFlex), title:"Kopf zu tief (HWS-Flexion)", tip:"Kopf neutral: Blick leicht nach vorn/unten, nicht „Kinn auf Brust“." });
       }
 
       const shortGlides = glideTimes.filter(t => (t/1000) < 0.8).length;
@@ -1611,25 +1628,28 @@
           if (isRecording) {
             recStats.frames++;
 
-            // Knie breit nur zählen, wenn valid
-            if (legs.kneeRatio != null) {
+            // Knie breit: nur wenn valide
+            if (legs.valid && legs.kneeRatio != null) {
               recStats.avgKneeRatioSum += legs.kneeRatio;
               recStats.avgKneeRatioN++;
-              if (legs.valid && legs.kneeRatio > 1.55) recStats.kneeWide++;
+              if (legs.kneeRatio > 1.55) recStats.kneeWide++;
             }
 
-            // Unsymmetrie nur, wenn valid + nicht side45
+            // Unsymmetrie: nur wenn valide + nicht side45
             if (filmingPreset.value !== "side45" && legs.valid) {
               if (legs.kneeDiff != null && legs.kneeDiff > 25) recStats.kneeAsym++;
             }
 
-            // Beine gestreckt in Gleitphase (nur wenn valid)
-            const [aL, aR] = legs.kneeAngles || [null,null];
-            const bent = ((aL != null && aL < 155) || (aR != null && aR < 155));
-            if (toggleTimer.checked && glideActive && legs.valid && bent) recStats.legsBent++;
+            // Beine gestreckt in Gleitphase (nur wenn valide)
+            if (toggleTimer.checked && glideActive && legs.valid) {
+              const [aL, aR] = legs.kneeAngles || [null,null];
+              const bent = ((aL != null && aL < 155) || (aR != null && aR < 155));
+              if (bent) recStats.legsBent++;
+            }
 
-            // HWS: nur während Gleitphase UND nur wenn Profil (neck.profile)
+            // Kopf: nur bewerten, wenn Profil (neck.profile)
             if (toggleTimer.checked && glideActive && neck?.profile && neck?.state) {
+              if (neck.state === "redFlex") recStats.headFlex++;
               if (neck.state === "redExt") {
                 recStats.headExtAny++;
                 if (headExtStreakStart == null) headExtStreakStart = ts;
@@ -1638,12 +1658,7 @@
               } else {
                 headExtStreakStart = null;
               }
-
-              if (neck.state === "redFlex") {
-                recStats.headFlex++;
-              }
             } else {
-              // Wenn nicht im Bewertungsmodus, Streak nicht weiterlaufen lassen
               headExtStreakStart = null;
             }
 
@@ -1654,9 +1669,7 @@
               if (hands.handRatio > HAND_RED_THR) handWideStreak++;
               else handWideStreak = 0;
 
-              if (handWideStreak >= HAND_STREAK_FRAMES) {
-                recStats.handWideFrames++;
-              }
+              if (handWideStreak >= HAND_STREAK_FRAMES) recStats.handWideFrames++;
             }
           }
 
@@ -1666,12 +1679,10 @@
 
           const gateDbg = (hands && hands.gated) ? "handGate=1" : "handGate=0";
 
-          const neckDbg = (neck && neck.neckDeg != null)
-            ? `neck=${neck.neckDeg.toFixed(1)}° state=${neck.state} prof=${neck.profile?1:0}`
-            : `neck=— prof=${neck?.profile?1:0}`;
+          const aDbg = armsStreamlineScore(raw).toFixed(2);
 
           drawOverlay(
-            `DEBUG: lm=${raw.length} mask=${hasMask?1:0} maskmax=${(maskInfo.max??0).toFixed(3)} score=${scoreEma.toFixed(2)} ${handDbg} ${gateDbg} ${neckDbg} rec=${isRecording?1:0} ui=${isPortraitUI()?"P":"L"}`
+            `DEBUG: lm=${raw.length} mask=${hasMask?1:0} maskmax=${(maskInfo.max??0).toFixed(3)} score=${scoreEma.toFixed(2)} arms=${aDbg} ${handDbg} ${gateDbg} rec=${isRecording?1:0} ui=${isPortraitUI()?"P":"L"}`
           );
         } else {
           drawOverlay(`DEBUG: lm=0 mask=${hasMask?1:0} maskmax=${(maskInfo.max??0).toFixed(3)} rec=${isRecording?1:0} ui=${isPortraitUI()?"P":"L"}`);
@@ -1766,7 +1777,6 @@
       setStatus("Slots zurückgesetzt.");
       clearTipsUI();
       resetNeckState();
-      resetRecStats();
     });
 
     // Feedback: Meta automatisch füllen + async submit (ohne Seiten-Reload)
@@ -1776,6 +1786,9 @@
       parts.push(`timer=${toggleTimer.checked?1:0}`);
       parts.push(`skel=${toggleSkeleton.checked?1:0}`);
       parts.push(`sil=${toggleSilhouette.checked?1:0}`);
+      parts.push(`det=${Number(detConf.value).toFixed(2)}`);
+      parts.push(`pres=${Number(presConf.value).toFixed(2)}`);
+      parts.push(`track=${Number(trackConf.value).toFixed(2)}`);
       parts.push(`ua=${navigator.userAgent}`);
       parts.push(`ui=${isPortraitUI()?"portrait":"landscape"}`);
       return parts.join(" | ");
