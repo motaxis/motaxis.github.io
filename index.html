@@ -263,7 +263,7 @@
           <summary>Armzug sehr breit</summary>
           <p class="hint">
             <b>Faustregel:</b> In der Zugphase nicht „sehr breit“ nach außen aufmachen.
-            Richtwert (Anzeige): Hand/Schulter <b>&gt; 2,10×</b> = Rot (deutlich zu weit).
+            Richtwert (Anzeige): Hand/Schulter <b>&gt; 2,50×</b> = Rot (deutlich zu weit).
           </p>
         </details>
         <details>
@@ -486,8 +486,7 @@
     // Helpers
     const dist = (a,b)=>Math.hypot(a.x-b.x, a.y-b.y);
     const distPx = (a,b)=>Math.hypot(a._cx-b._cx, a._cy-b._cy);
-    // NEW: horizontal distance in CSS px (prevents early "red" due to diagonal distance)
-    const distXPx = (a,b)=>Math.abs(a._cx - b._cx);
+    const distXPx = (a,b)=>Math.abs(a._cx - b._cx); // horizontal distance (X) in CSS px
 
     function angleBetween(u, v) {
       const dot = u.x*v.x + u.y*v.y;
@@ -721,7 +720,6 @@
       }
 
       const shoulder = { x:(ls.x+rs.x)/2, y:(ls.y+rs.y)/2 };
-      const hip      = { x:(lh.x+rh.x)/2, y:(lh.y+rh.y)/2 };
       const head     = headCenterNorm(rawNorm);
       if (!head) {
         return { neckDeg: null, state: "unknown", neutral: null, d: null, profile:false, facing:1 };
@@ -841,45 +839,12 @@
       return { kneeRatio, kneeDiff: diff, kneeAngles: [aL, aR] };
     }
 
-    // Hand-Achse (UPDATED):
-    // Measurement uses horizontal (X) distances to reflect "Breite".
-    // Thresholds: Grün <= 1.80, Orange <= 2.10, Rot > 2.10
-    // Tip/stat trigger: > 2.10
+    // Hand axis (only OUTSIDE glide phase + more tolerance):
+    // Thresholds: Grün <= 2.10, Orange <= 2.50, Rot > 2.50
     function colorForHandRatio(r) {
-      if (r <= 1.80) return "rgba(0,170,0,0.95)";
-      if (r <= 2.10) return "rgba(255,140,0,0.95)";
+      if (r <= 2.10) return "rgba(0,170,0,0.95)";
+      if (r <= 2.50) return "rgba(255,140,0,0.95)";
       return "rgba(220,0,0,0.95)";
-    }
-
-    function drawHandAxis(raw, cssPoints) {
-      if (!toggleHandAxis.checked || !raw || !cssPoints) return { handRatio: null };
-
-      // Use wrists only for stability
-      const wL = cssPoints[15];
-      const wR = cssPoints[16];
-      const sL = cssPoints[11], sR = cssPoints[12];
-      if (!wL || !wR || !sL || !sR) return { handRatio: null };
-
-      // Horizontal widths in CSS px (prevents diagonal-distance spikes)
-      const shoulderW = distXPx(sL, sR);
-      const handW = distXPx(wL, wR);
-      const handRatio = (shoulderW > 1) ? (handW / shoulderW) : null;
-
-      if (handRatio != null) {
-        ctx.save();
-        ctx.lineCap = "round";
-        ctx.lineWidth = 3;
-        ctx.setLineDash([7, 6]);
-        ctx.strokeStyle = colorForHandRatio(handRatio);
-        ctx.beginPath();
-        ctx.moveTo(wL._cx, wL._cy);
-        ctx.lineTo(wR._cx, wR._cy);
-        ctx.stroke();
-        ctx.setLineDash([]);
-        ctx.restore();
-      }
-
-      return { handRatio };
     }
 
     // Timer logic
@@ -1058,6 +1023,39 @@
       }
     }
 
+    // Hand-axis drawing + measurement (GATED: only when NOT glideActive)
+    function drawHandAxis(raw, cssPoints) {
+      // Only evaluate/draw outside glide phase (i.e., during arm pull)
+      if (toggleTimer.checked && glideActive) return { handRatio: null, gated: true };
+
+      if (!toggleHandAxis.checked || !raw || !cssPoints) return { handRatio: null, gated: false };
+
+      const wL = cssPoints[15];
+      const wR = cssPoints[16];
+      const sL = cssPoints[11], sR = cssPoints[12];
+      if (!wL || !wR || !sL || !sR) return { handRatio: null, gated: false };
+
+      const shoulderW = distXPx(sL, sR);
+      const handW = distXPx(wL, wR);
+      const handRatio = (shoulderW > 1) ? (handW / shoulderW) : null;
+
+      if (handRatio != null) {
+        ctx.save();
+        ctx.lineCap = "round";
+        ctx.lineWidth = 3;
+        ctx.setLineDash([7, 6]);
+        ctx.strokeStyle = colorForHandRatio(handRatio);
+        ctx.beginPath();
+        ctx.moveTo(wL._cx, wL._cy);
+        ctx.lineTo(wR._cx, wR._cy);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.restore();
+      }
+
+      return { handRatio, gated: false };
+    }
+
     // Overlay + debug footer
     function drawOverlay(debugText=""){
       if(!toggleTimer.checked) {
@@ -1163,15 +1161,26 @@
     let recorder=null, recordedChunks=[], lastBlob=null;
     let isRecording = false;
 
+    // Hand detection (only during arm pull phase i.e. outside glideActive)
+    let handWideStreak = 0;
+    const HAND_RED_THR = 2.50;       // align with red threshold (> 2.50)
+    const HAND_STREAK_FRAMES = 8;    // consecutive frames required
+
     const recStats = {
       frames:0,
       kneeWide:0, kneeAsym:0, legsBent:0,
       headExt:0, headFlex:0,
       avgKneeRatioSum:0, avgKneeRatioN:0,
-      handWide:0,
-      avgHandRatioSum:0, avgHandRatioN:0
+
+      // Only count hand metrics during arm-pull (non-glide)
+      armPullFrames: 0,
+      handWideFrames: 0
     };
-    function resetRecStats() { for (const k of Object.keys(recStats)) recStats[k] = 0; }
+
+    function resetRecStats() {
+      for (const k of Object.keys(recStats)) recStats[k] = 0;
+      handWideStreak = 0;
+    }
 
     function clearTipsUI() {
       tipsBox.style.display = "none";
@@ -1198,8 +1207,11 @@
 
       if (p(recStats.legsBent) >= thr) issues.push({ score:p(recStats.legsBent), title:"Beine nicht gestreckt in der Gleitphase", tip:"Nach dem Beinschlag vollständig strecken – kurz stabil gleiten." });
 
-      if (p(recStats.handWide) >= thr) issues.push({
-        score:p(recStats.handWide),
+      // Hand issue only based on arm-pull window
+      const armPullDen = Math.max(1, recStats.armPullFrames);
+      const handWideShare = recStats.handWideFrames / armPullDen;
+      if (handWideShare >= 0.18) issues.push({
+        score: handWideShare,
         title:"Armzug sehr breit",
         tip:"Im Armzug nicht extrem nach außen aufmachen: Ellbogen eher „hoch“ halten und moderat öffnen."
       });
@@ -1215,12 +1227,11 @@
       if (top.length === 0) return;
 
       const avgKnee = (recStats.avgKneeRatioN > 0) ? (recStats.avgKneeRatioSum / recStats.avgKneeRatioN) : null;
-      const avgHand = (recStats.avgHandRatioN > 0) ? (recStats.avgHandRatioSum / recStats.avgHandRatioN) : null;
 
       hintMeta.textContent =
         `${recStats.frames} Frames` +
         (avgKnee ? ` • Ø Knie/Schulter ${avgKnee.toFixed(2)}×` : "") +
-        (avgHand ? ` • Ø Hand/Schulter ${avgHand.toFixed(2)}×` : "");
+        (recStats.armPullFrames ? ` • Zugphase ${recStats.armPullFrames}F` : "");
 
       hintText.textContent = "In dieser Aufnahme waren folgende Punkte über mehrere Frames auffällig:";
 
@@ -1410,9 +1421,11 @@
 
           const neck = drawNeckAxis(raw, cssPoints, ts);
           const legs = drawLegChecks(raw, cssPoints);
-          const hands = drawHandAxis(raw, cssPoints);
 
+          // Update timer BEFORE hands (so glideActive is current for gating)
           updateTimer(raw, ts, isRecording);
+
+          const hands = drawHandAxis(raw, cssPoints);
 
           if (isRecording) {
             recStats.frames++;
@@ -1427,13 +1440,6 @@
               if (legs.kneeDiff != null && legs.kneeDiff > 25) recStats.kneeAsym++;
             }
 
-            if (hands.handRatio != null) {
-              recStats.avgHandRatioSum += hands.handRatio;
-              recStats.avgHandRatioN++;
-              // UPDATED: trigger aligned with RED threshold (very wide)
-              if (hands.handRatio > 2.10) recStats.handWide++;
-            }
-
             const [aL, aR] = legs.kneeAngles || [null,null];
             const bent = ((aL != null && aL < 155) || (aR != null && aR < 155));
             if (toggleTimer.checked && glideActive && bent) recStats.legsBent++;
@@ -1442,13 +1448,31 @@
               if (neck.state === "redExt") recStats.headExt++;
               if (neck.state === "redFlex") recStats.headFlex++;
             }
+
+            // Hand-width detection ONLY outside glide phase (arm pull)
+            if (!glideActive && hands.handRatio != null) {
+              recStats.armPullFrames++;
+
+              if (hands.handRatio > HAND_RED_THR) {
+                handWideStreak++;
+              } else {
+                handWideStreak = 0;
+              }
+
+              // count only if it persists across multiple consecutive frames
+              if (handWideStreak >= HAND_STREAK_FRAMES) {
+                recStats.handWideFrames++;
+              }
+            }
           }
 
           const handDbg = (hands && hands.handRatio != null)
             ? `hand/shoulderX=${hands.handRatio.toFixed(2)}`
             : `hand/shoulderX=—`;
 
-          drawOverlay(`DEBUG: lm=${raw.length} mask=${hasMask?1:0} maskmax=${(maskInfo.max??0).toFixed(3)} score=${scoreEma.toFixed(2)} ${handDbg} rec=${isRecording?1:0} ui=${isPortraitUI()?"P":"L"}`);
+          const gateDbg = (hands && hands.gated) ? "handGate=1" : "handGate=0";
+
+          drawOverlay(`DEBUG: lm=${raw.length} mask=${hasMask?1:0} maskmax=${(maskInfo.max??0).toFixed(3)} score=${scoreEma.toFixed(2)} ${handDbg} ${gateDbg} rec=${isRecording?1:0} ui=${isPortraitUI()?"P":"L"}`);
         } else {
           drawOverlay(`DEBUG: lm=0 mask=${hasMask?1:0} maskmax=${(maskInfo.max??0).toFixed(3)} rec=${isRecording?1:0} ui=${isPortraitUI()?"P":"L"}`);
         }
