@@ -260,10 +260,10 @@
           <p class="hint"><b>Faustregel:</b> Knieöffnung ungefähr <b>Schulterbreite</b>. Richtwert: Knie/Schulter <b>&gt; 1,55×</b>.</p>
         </details>
         <details>
-          <summary>Armzug sehr breit </summary>
+          <summary>Armzug sehr breit</summary>
           <p class="hint">
             <b>Faustregel:</b> In der Zugphase nicht „sehr breit“ nach außen aufmachen.
-            Richtwert: Hand/Schulter <b>&gt; 1,60×</b> = Rot (deutlich zu weit).
+            Richtwert (Anzeige): Hand/Schulter <b>&gt; 1,85×</b> = Rot (deutlich zu weit).
           </p>
         </details>
         <details>
@@ -839,11 +839,12 @@
       return { kneeRatio, kneeDiff: diff, kneeAngles: [aL, aR] };
     }
 
-    // Hand axis thresholds for arm pull:
-    // Grün <= 1.35, Orange <= 1.60, Rot > 1.60 (Tip trigger: > 1.70)
+    // Hand axis thresholds for arm pull (UPDATED):
+    // Grün <= 1.60, Orange <= 1.85, Rot > 1.85
+    // Tip trigger: > 1.90
     function colorForHandRatio(r) {
-      if (r <= 1.35) return "rgba(0,170,0,0.95)";
-      if (r <= 1.60) return "rgba(255,140,0,0.95)";
+      if (r <= 1.60) return "rgba(0,170,0,0.95)";
+      if (r <= 1.85) return "rgba(255,140,0,0.95)";
       return "rgba(220,0,0,0.95)";
     }
 
@@ -1194,7 +1195,7 @@
 
       if (p(recStats.handWide) >= thr) issues.push({
         score:p(recStats.handWide),
-        title:"Armzug sehr breit ",
+        title:"Armzug sehr breit",
         tip:"Im Armzug nicht extrem nach außen aufmachen: Ellbogen eher „hoch“ halten und moderat öffnen."
       });
 
@@ -1246,7 +1247,6 @@
       isRecording = true;
 
       resetTimerState(true);
-
       clearTipsUI();
 
       const s = canvas.captureStream(15);
@@ -1425,7 +1425,8 @@
             if (hands.handRatio != null) {
               recStats.avgHandRatioSum += hands.handRatio;
               recStats.avgHandRatioN++;
-              if (hands.handRatio > 1.70) recStats.handWide++;
+              // UPDATED: tip/stat trigger later (deutlich breiter)
+              if (hands.handRatio > 1.90) recStats.handWide++;
             }
 
             const [aL, aR] = legs.kneeAngles || [null,null];
