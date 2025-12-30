@@ -105,6 +105,62 @@
   </div>
 
   <video id="video" class="videoHidden" playsinline autoplay muted></video>
+// ---------------- FEEDBACK (Formspree) ----------------
+const fbForm = document.getElementById("feedbackForm");
+const fbStatus = document.getElementById("fbStatus");
+const fbPreset = document.getElementById("fbPreset");
+const fbPage = document.getElementById("fbPage");
+const fbUA = document.getElementById("fbUA");
+
+if (fbForm) {
+  // Kontext einmal setzen
+  try {
+    fbPage.value = location.href;
+    fbUA.value = navigator.userAgent || "";
+  } catch (_) {}
+
+  fbForm.addEventListener("submit", (e) => {
+    // Preset immer aktuell setzen
+    try {
+      fbPreset.value = filmingPreset?.value || "";
+    } catch (_) {}
+
+    fbStatus.textContent = "Sende Feedback…";
+  });
+
+  fbForm.addEventListener("reset", () => {
+    fbStatus.textContent = "";
+  });
+
+  fbForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const formData = new FormData(fbForm);
+
+    try {
+      const res = await fetch(fbForm.action, {
+        method: "POST",
+        body: formData,
+        headers: { "Accept": "application/json" }
+      });
+
+      if (res.ok) {
+        fbStatus.textContent = "Danke! Feedback wurde gesendet.";
+        fbForm.reset();
+
+        // Kontext nach Reset neu setzen
+        try {
+          fbPage.value = location.href;
+          fbUA.value = navigator.userAgent || "";
+        } catch (_) {}
+      } else {
+        fbStatus.textContent = "Senden fehlgeschlagen. Bitte später erneut versuchen.";
+      }
+    } catch (err) {
+      fbStatus.textContent = "Netzwerkfehler. Bitte Verbindung prüfen.";
+    }
+  });
+}
 
   <div class="stack">
     <div class="block">
@@ -1552,6 +1608,63 @@
       clearTipsUI();
       resetNeckState();
     });
+    // ---------------- FEEDBACK (Formspree) ----------------
+const fbForm = document.getElementById("feedbackForm");
+const fbStatus = document.getElementById("fbStatus");
+const fbPreset = document.getElementById("fbPreset");
+const fbPage = document.getElementById("fbPage");
+const fbUA = document.getElementById("fbUA");
+
+if (fbForm) {
+  // Kontext einmal setzen
+  try {
+    fbPage.value = location.href;
+    fbUA.value = navigator.userAgent || "";
+  } catch (_) {}
+
+  fbForm.addEventListener("submit", (e) => {
+    // Preset immer aktuell setzen
+    try {
+      fbPreset.value = filmingPreset?.value || "";
+    } catch (_) {}
+
+    fbStatus.textContent = "Sende Feedback…";
+  });
+
+  fbForm.addEventListener("reset", () => {
+    fbStatus.textContent = "";
+  });
+
+  fbForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const formData = new FormData(fbForm);
+
+    try {
+      const res = await fetch(fbForm.action, {
+        method: "POST",
+        body: formData,
+        headers: { "Accept": "application/json" }
+      });
+
+      if (res.ok) {
+        fbStatus.textContent = "Danke! Feedback wurde gesendet.";
+        fbForm.reset();
+
+        // Kontext nach Reset neu setzen
+        try {
+          fbPage.value = location.href;
+          fbUA.value = navigator.userAgent || "";
+        } catch (_) {}
+      } else {
+        fbStatus.textContent = "Senden fehlgeschlagen. Bitte später erneut versuchen.";
+      }
+    } catch (err) {
+      fbStatus.textContent = "Netzwerkfehler. Bitte Verbindung prüfen.";
+    }
+  });
+}
+
   </script>
 </body>
 </html>
