@@ -3,250 +3,1414 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Pose Recorder (Privacy Skeleton)</title>
+  <title>Bewegungsanalyse Recorder | Brust – Gleitphase</title>
   <style>
+    :root { --bg: #bfe7ff; }
+
     body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 16px; }
-    .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin: 12px 0; }
-    video, canvas { max-width: 100%; width: 480px; height: auto; border: 1px solid #ddd; border-radius: 8px; }
-    button { padding: 10px 14px; border-radius: 8px; border: 1px solid #ccc; background: #fff; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+    .hint { color: #555; font-size: 14px; line-height: 1.4; max-width: 1100px; }
+
+    .header {
+      background: var(--bg);
+      border: 1px solid #d6ecff;
+      border-radius: 14px;
+      padding: 12px 14px;
+      margin-bottom: 12px;
+    }
+    .header h1 { margin: 0; font-size: 20px; }
+    .header p { margin: 6px 0 0 0; color: #1f2a33; font-size: 13.5px; line-height: 1.35; max-width: 980px; }
+
+    .stack { display: grid; grid-template-columns: 1fr; gap: 12px; max-width: 1100px; }
+
+    .block {
+      border: 1px solid #ddd;
+      border-radius: 12px;
+      padding: 10px 12px;
+      background: #fff;
+    }
+    .blockTitle {
+      font-weight: 800;
+      margin: 0 0 10px 0;
+      font-size: 13px;
+      color: #222;
+      letter-spacing: 0.2px;
+    }
+
+    details { border: 1px solid #ddd; border-radius: 12px; padding: 10px 12px; background: #fff; }
+    summary { cursor: pointer; font-weight: 800; }
+
+    label { display: inline-flex; align-items: center; gap: 8px; padding: 8px 10px; border: 1px solid #ddd; border-radius: 10px; background:#fff; }
+    select { padding: 9px 12px; border-radius: 10px; border: 1px solid #ccc; background: #fff; }
+
+    button { padding: 10px 14px; border-radius: 10px; border: 1px solid #ccc; background: #fff; }
     button.primary { border-color: #111; }
-    .hint { color: #555; font-size: 14px; line-height: 1.4; }
+    button:disabled { opacity: 0.5; }
+
+    .btnRow { display:flex; gap:10px; flex-wrap: wrap; }
+    .btnRow button { flex: 1 1 auto; }
+    .btnRow .wide { flex: 1 1 100%; }
+
+    video, canvas { max-width: 100%; border: 1px solid #ddd; border-radius: 10px; }
+    video { width: 360px; height: auto; background:#000; }
+    canvas { width: 360px; height: auto; background: var(--bg); }
+
+    .videoHidden {
+      width: 1px !important;
+      height: 1px !important;
+      opacity: 0 !important;
+      position: absolute !important;
+      left: -9999px !important;
+      top: -9999px !important;
+      pointer-events: none !important;
+    }
+
+    .rangeWrap { display:flex; align-items:center; gap:10px; padding: 8px 10px; border:1px solid #ddd; border-radius: 10px; margin-top: 10px; flex-wrap: wrap; background:#fff; }
+    .rangeWrap span { min-width: 170px; font-size: 13px; color:#666; }
+    .small { font-size: 13px; color:#666; min-width: 64px; text-align:right; }
+
+    .tipsBox {
+      margin-top: 10px;
+      border: 1px solid #e1e1e1;
+      border-radius: 12px;
+      padding: 10px 12px;
+      background: #fafafa;
+      display: none;
+      max-width: 1100px;
+    }
+    .tipsBox h3 { margin: 0 0 6px 0; font-size: 14px; }
+    .tipsBox ul { margin: 6px 0 0 18px; padding: 0; }
+    .pill {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid #ddd;
+      font-size: 12px;
+      color: #444;
+      background: #fff;
+      margin-left: 6px;
+    }
+
+    #status { margin-top: 12px; }
   </style>
 </head>
+
 <body>
-  <h1>Pose Recorder (nur Skelett-Video)</h1>
-  <p class="hint">
-    Speichert nur die abstrahierte Skelettdarstellung (Canvas), nicht das Kamerabild.
-    Für iPhones per HTTPS hosten.
-  </p>
-
-  <div class="row">
-    <button id="btnInit" class="primary">Kamera aktivieren</button>
-    <button id="btnRec" disabled>Aufnahme starten</button>
-    <button id="btnStop" disabled>Stop</button>
-    <button id="btnShare" disabled>Teilen/Speichern</button>
+  <div class="header">
+    <h1>Bewegungsanalyse Recorder</h1>
+    <p>
+      Beta-Version zur anonymen Aufnahme und Analyse von Skelettachsen und Bewegungen (Pose-Landmarks).<br>
+      Optimiert derzeit für Brustschwimmen (Gleitphase/Streamline); Auswertungen sind experimentell und können je nach Aufnahmebedingungen variieren.
+    </p>
   </div>
 
-  <div class="row">
-    <video id="video" playsinline autoplay muted></video>
-    <canvas id="canvas"></canvas>
+  <video id="video" class="videoHidden" playsinline autoplay muted></video>
+
+  <div class="stack">
+    <div class="block">
+      <div class="blockTitle">Kamera</div>
+      <div class="btnRow">
+        <button id="btnInit" class="primary wide">Kamera aktivieren</button>
+        <button id="btnSwitch" disabled class="wide">Kamera wechseln (Rück)</button>
+      </div>
+    </div>
+
+    <details id="displayBox">
+      <summary>Anzeige (allgemein)</summary>
+      <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap;">
+        <label><input type="checkbox" id="toggleSkeleton" checked /> Skelett</label>
+        <label><input type="checkbox" id="toggleSilhouette" checked /> Segmentierung</label>
+
+        <select id="filmingPreset" title="Aufnahmeposition">
+          <option value="stand" selected>Stand</option>
+          <option value="side45">45° seitlich</option>
+          <option value="back45">45° hinten</option>
+        </select>
+      </div>
+
+      <details id="advancedBox" style="margin-top:10px;">
+        <summary>Erweiterte Einstellungen</summary>
+
+        <div class="rangeWrap">
+          <span>Input-Video anzeigen</span>
+          <label style="border:none; padding:0; border-radius:0;">
+            <input type="checkbox" id="showInputVideo" />
+            <span class="small">anzeigen</span>
+          </label>
+          <span class="hint" style="max-width:none;">(Optional – Output bleibt anonym.)</span>
+        </div>
+
+        <div class="rangeWrap">
+          <span>Segmentierung – Deckkraft</span>
+          <input id="silOpacity" type="range" min="0" max="1" step="0.05" value="0.40">
+          <span id="silOpacityVal" class="small">0.40</span>
+        </div>
+
+        <div class="rangeWrap">
+          <span>Segmentierung – Schwelle</span>
+          <input id="silThresh" type="range" min="0" max="100" step="1" value="70">
+          <span id="silThreshVal" class="small">70</span>
+        </div>
+
+        <div class="rangeWrap">
+          <span>Skelett – Linienstärke</span>
+          <input id="skelLine" type="range" min="1" max="10" step="1" value="3">
+          <span id="skelLineVal" class="small">3</span>
+        </div>
+
+        <div class="rangeWrap">
+          <span>Skelett – Punkt-Radius</span>
+          <input id="skelDot" type="range" min="1" max="10" step="1" value="4">
+          <span id="skelDotVal" class="small">4</span>
+        </div>
+
+        <div class="rangeWrap">
+          <span>Detection (min)</span>
+          <input id="detConf" type="range" min="0.3" max="0.95" step="0.01" value="0.50">
+          <span id="detVal" class="small">0.50</span>
+        </div>
+
+        <div class="rangeWrap">
+          <span>Presence (min)</span>
+          <input id="presConf" type="range" min="0.3" max="0.95" step="0.01" value="0.50">
+          <span id="presVal" class="small">0.50</span>
+        </div>
+
+        <div class="rangeWrap">
+          <span>Tracking (min)</span>
+          <input id="trackConf" type="range" min="0.3" max="0.95" step="0.01" value="0.55">
+          <span id="trackVal" class="small">0.55</span>
+        </div>
+
+        <div class="rangeWrap">
+          <span>Glättung (EMA)</span>
+          <input id="smooth" type="range" min="0" max="0.9" step="0.05" value="0.55">
+          <span id="smoothVal" class="small">0.55</span>
+        </div>
+
+        <div class="rangeWrap">
+          <span>HWS – Grün-Toleranz (°)</span>
+          <input id="neckTol" type="range" min="6" max="35" step="1" value="18">
+          <span id="neckTolVal" class="small">18</span>
+        </div>
+
+        <div class="rangeWrap">
+          <span>HWS – Neutral-Offset (°)</span>
+          <input id="neckNeutral" type="range" min="-10" max="25" step="1" value="12">
+          <span id="neckNeutralVal" class="small">12</span>
+        </div>
+
+        <div class="rangeWrap">
+          <span>HWS – Rot-Schwelle extra (°)</span>
+          <input id="neckRedExtra" type="range" min="0" max="20" step="1" value="8">
+          <span id="neckRedExtraVal" class="small">8</span>
+        </div>
+
+        <div class="rangeWrap">
+          <span>HWS – Glättung (EMA)</span>
+          <input id="neckEma" type="range" min="0.60" max="0.90" step="0.01" value="0.82">
+          <span id="neckEmaVal" class="small">0.82</span>
+        </div>
+
+        <div class="rangeWrap">
+          <span>HWS – Hold (ms)</span>
+          <input id="neckHold" type="range" min="80" max="350" step="10" value="200">
+          <span id="neckHoldVal" class="small">200</span>
+        </div>
+
+      </details>
+    </details>
+
+    <details id="breastTools">
+      <summary>Brustschwimmen-Tools (spezifisch)</summary>
+
+      <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap;">
+        <label><input type="checkbox" id="toggleNeck" checked /> HWS-Achse (Brust)</label>
+        <label><input type="checkbox" id="toggleLegCheck" checked /> Knie/Beine-Check (Brust)</label>
+        <label><input type="checkbox" id="toggleTimer" checked /> Timer Brust – Gleitphase</label>
+        <label><input type="checkbox" id="toggleHintBox" checked /> Techniktipps nach Stop</label>
+      </div>
+
+      <details style="margin-top:10px;">
+        <summary>Technik-Checkliste (Brust: Gleitphase)</summary>
+        <p class="hint">
+          Diese Liste ist <b>nicht vollständig</b>. Aufgeführt sind vor allem Merkmale, die man mit der <b>Skelettanalyse</b> aus typischen Aufnahmewinkeln
+          vergleichsweise zuverlässig prüfen kann.
+        </p>
+        <details>
+          <summary>Knie öffnen zu weit („Schere“ / Bremsfläche)</summary>
+          <p class="hint"><b>Faustregel:</b> Knieöffnung ungefähr <b>Schulterbreite</b>. Richtwert: Knie/Schulter <b>&gt; 1,55×</b>.</p>
+        </details>
+        <details>
+          <summary>Beinschlag unsymmetrisch</summary>
+          <p class="hint">Richtwert: Differenz Knie-Winkel <b>&gt; 25–30°</b> über mehrere Frames.</p>
+        </details>
+        <details>
+          <summary>Kopf (HWS) – neutral vs. Flexion/Extension</summary>
+          <p class="hint">Grün: im Neutralband. Rot: Kopf deutlich nach vorn/unten (Flexion) oder deutlich nach hinten (Überstreckung).</p>
+        </details>
+        <details>
+          <summary>Gleitphase zu kurz</summary>
+          <p class="hint">Grob: häufig <b>0,8–1,5 s</b> bis <b>1,5–2,5 s</b>.</p>
+        </details>
+      </details>
+    </details>
+
+    <div class="block">
+      <div class="blockTitle">Aufnahme</div>
+      <div class="btnRow">
+        <button id="btnRec" disabled class="wide">Aufnahme starten</button>
+        <button id="btnStop" disabled>Stop</button>
+        <button id="btnShare" disabled>Teilen/Speichern</button>
+        <button id="btnReset" disabled class="wide">Slots zurücksetzen</button>
+      </div>
+    </div>
+
+    <div>
+      <canvas id="canvas"></canvas>
+    </div>
+
+    <div id="tipsBox" class="tipsBox">
+      <h3>Techniktipps Brustschwimmen <span id="hintMeta" class="pill"></span></h3>
+      <div class="hint" id="hintText"></div>
+      <ul id="hintList"></ul>
+    </div>
   </div>
 
-  <p class="hint" id="status">Status: bereit</p>
+  <p class="hint mono" id="status">Status: bereit</p>
 
   <script type="module">
-    import vision from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14";
-    const { PoseLandmarker, FilesetResolver, DrawingUtils } = vision;
+    import { FilesetResolver, PoseLandmarker } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14";
 
+    // DOM
     const video = document.getElementById("video");
     const canvas = document.getElementById("canvas");
     const ctx = canvas.getContext("2d");
 
     const btnInit = document.getElementById("btnInit");
+    const btnSwitch = document.getElementById("btnSwitch");
     const btnRec = document.getElementById("btnRec");
     const btnStop = document.getElementById("btnStop");
     const btnShare = document.getElementById("btnShare");
+    const btnReset = document.getElementById("btnReset");
+
+    const toggleSkeleton = document.getElementById("toggleSkeleton");
+    const toggleSilhouette = document.getElementById("toggleSilhouette");
+
+    const toggleNeck = document.getElementById("toggleNeck");
+    const toggleLegCheck = document.getElementById("toggleLegCheck");
+    const toggleTimer = document.getElementById("toggleTimer");
+    const toggleHintBox = document.getElementById("toggleHintBox");
+    const filmingPreset = document.getElementById("filmingPreset");
+
+    const showInputVideo = document.getElementById("showInputVideo");
+
+    const silOpacity = document.getElementById("silOpacity");
+    const silThresh = document.getElementById("silThresh");
+    const skelLine  = document.getElementById("skelLine");
+    const skelDot   = document.getElementById("skelDot");
+    const detConf = document.getElementById("detConf");
+    const presConf = document.getElementById("presConf");
+    const trackConf = document.getElementById("trackConf");
+    const smooth = document.getElementById("smooth");
+
+    const neckTol = document.getElementById("neckTol");
+    const neckNeutral = document.getElementById("neckNeutral");
+    const neckRedExtra = document.getElementById("neckRedExtra");
+    const neckEma = document.getElementById("neckEma");
+    const neckHold = document.getElementById("neckHold");
+
+    const silOpacityVal = document.getElementById("silOpacityVal");
+    const silThreshVal  = document.getElementById("silThreshVal");
+    const skelLineVal   = document.getElementById("skelLineVal");
+    const skelDotVal    = document.getElementById("skelDotVal");
+    const detVal = document.getElementById("detVal");
+    const presVal = document.getElementById("presVal");
+    const trackVal = document.getElementById("trackVal");
+    const smoothVal = document.getElementById("smoothVal");
+
+    const neckTolVal = document.getElementById("neckTolVal");
+    const neckNeutralVal = document.getElementById("neckNeutralVal");
+    const neckRedExtraVal = document.getElementById("neckRedExtraVal");
+    const neckEmaVal = document.getElementById("neckEmaVal");
+    const neckHoldVal = document.getElementById("neckHoldVal");
+
+    const tipsBox = document.getElementById("tipsBox");
+    const hintList = document.getElementById("hintList");
+    const hintText = document.getElementById("hintText");
+    const hintMeta = document.getElementById("hintMeta");
+
     const statusEl = document.getElementById("status");
+    const setStatus = (s) => statusEl.textContent = "Status: " + s;
 
-    let poseLandmarker = null;
-    let drawingUtils = null;
-    let rafId = null;
+    function bindSlider(el, out, fmt=(v)=>Number(v).toFixed(2)) {
+      const update = () => out.textContent = fmt(el.value);
+      el.addEventListener("input", update);
+      update();
+    }
+    bindSlider(silOpacity, silOpacityVal, v => Number(v).toFixed(2));
+    bindSlider(silThresh,  silThreshVal,  v => String(Math.round(Number(v))));
+    bindSlider(skelLine,   skelLineVal,   v => String(Math.round(Number(v))));
+    bindSlider(skelDot,    skelDotVal,    v => String(Math.round(Number(v))));
+    bindSlider(detConf, detVal);
+    bindSlider(presConf, presVal);
+    bindSlider(trackConf, trackVal);
+    bindSlider(smooth, smoothVal, v => Number(v).toFixed(2));
 
-    // Recorder state
-    let recorder = null;
-    let recordedChunks = [];
-    let lastBlob = null;
+    bindSlider(neckTol, neckTolVal, v => String(Math.round(Number(v))));
+    bindSlider(neckNeutral, neckNeutralVal, v => String(Math.round(Number(v))));
+    bindSlider(neckRedExtra, neckRedExtraVal, v => String(Math.round(Number(v))));
+    bindSlider(neckEma, neckEmaVal, v => Number(v).toFixed(2));
+    bindSlider(neckHold, neckHoldVal, v => String(Math.round(Number(v))));
 
-    function setStatus(s) { statusEl.textContent = "Status: " + s; }
+    function setInputVideoVisible(visible) {
+      if (visible) video.classList.remove("videoHidden");
+      else video.classList.add("videoHidden");
+    }
+    setInputVideoVisible(false);
+    showInputVideo?.addEventListener("change", () => setInputVideoVisible(showInputVideo.checked));
 
-    // Pick a supported mimeType (iOS differs)
-    function pickMimeType() {
-      const candidates = [
-        "video/webm;codecs=vp9",
-        "video/webm;codecs=vp8",
-        "video/webm",
-        "video/mp4" // sometimes supported, often not with MediaRecorder on iOS
-      ];
-      for (const t of candidates) {
-        if (window.MediaRecorder && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(t)) return t;
-      }
-      return ""; // let browser choose
+    // Orientation + HiDPI
+    function isPortraitUI() {
+      const so = screen.orientation && screen.orientation.type;
+      if (typeof so === "string") return so.includes("portrait");
+      if (window.matchMedia) return window.matchMedia("(orientation: portrait)").matches;
+      return window.innerHeight >= window.innerWidth;
     }
 
-    async function initPose() {
-      setStatus("lade MediaPipe PoseLandmarker…");
+    let CSS_W = 360, CSS_H = 640;
+    function setupHiDPICanvas(cssW, cssH) {
+      CSS_W = cssW; CSS_H = cssH;
+      const dpr = Math.max(1, window.devicePixelRatio || 1);
+      canvas.style.width = cssW + "px";
+      canvas.style.height = cssH + "px";
+      canvas.width = Math.round(cssW * dpr);
+      canvas.height = Math.round(cssH * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.imageSmoothingEnabled = false;
+    }
+    function applyLayoutFromOrientation() {
+      if (isPortraitUI()) setupHiDPICanvas(360, 640);
+      else setupHiDPICanvas(720, 405);
+      setStatus("Ausrichtung: " + (isPortraitUI() ? "Hochformat" : "Querformat"));
+    }
+    window.addEventListener("resize", applyLayoutFromOrientation);
+    window.addEventListener("orientationchange", applyLayoutFromOrientation);
+    applyLayoutFromOrientation();
+
+    const BG = "#bfe7ff";
+
+    // Pose connections
+    const POSE_CONNECTIONS = [
+      [0,1],[1,2],[2,3],[3,7],
+      [0,4],[4,5],[5,6],[6,8],
+      [9,10],
+      [11,12],
+      [11,13],[13,15],[15,17],[15,19],[15,21],
+      [12,14],[14,16],[16,18],[16,20],[16,22],
+      [11,23],[12,24],[23,24],
+      [23,25],[25,27],[27,29],[29,31],
+      [24,26],[26,28],[28,30],[30,32]
+    ];
+
+    // Helpers
+    const dist = (a,b)=>Math.hypot(a.x-b.x, a.y-b.y);
+    const distPx = (a,b)=>Math.hypot(a._cx-b._cx, a._cy-b._cy);
+
+    function angleBetween(u, v) {
+      const dot = u.x*v.x + u.y*v.y;
+      const nu = Math.hypot(u.x,u.y), nv = Math.hypot(v.x,v.y);
+      if (!nu || !nv) return 0;
+      const c = Math.max(-1, Math.min(1, dot/(nu*nv)));
+      return Math.acos(c) * 180/Math.PI;
+    }
+
+    function signedAngleDeg(a, b) {
+      const cross = a.x*b.y - a.y*b.x;
+      const dot   = a.x*b.x + a.y*b.y;
+      return Math.atan2(cross, dot) * 180/Math.PI;
+    }
+
+    function normVec(v){
+      const n = Math.hypot(v.x, v.y) || 1;
+      return { x: v.x/n, y: v.y/n };
+    }
+
+    function kneeAngle(hip, knee, ankle) {
+      if (!hip || !knee || !ankle) return null;
+      const u = { x: hip.x - knee.x, y: hip.y - knee.y };
+      const v = { x: ankle.x - knee.x, y: ankle.y - knee.y };
+      return angleBetween(u, v);
+    }
+
+    function mapLandmarksContain(rawLandmarks, vw, vh, cw, ch) {
+      const scale = Math.min(cw / vw, ch / vh);
+      const dispW = vw * scale;
+      const dispH = vh * scale;
+      const offX = (cw - dispW) / 2;
+      const offY = (ch - dispH) / 2;
+
+      return rawLandmarks.map(p => {
+        const px = p.x * vw;
+        const py = p.y * vh;
+        return { ...p, _cx: offX + px * scale, _cy: offY + py * scale };
+      });
+    }
+
+    // EMA smoothing in CSS space (for points)
+    let smoothedCss = null;
+    function emaCss(cssPoints) {
+      const a = Number(smooth.value);
+      if (!cssPoints) return null;
+      if (!smoothedCss || smoothedCss.length !== cssPoints.length) {
+        smoothedCss = cssPoints.map(p => ({ ...p }));
+        return smoothedCss;
+      }
+      for (let i = 0; i < cssPoints.length; i++) {
+        const p = cssPoints[i], s = smoothedCss[i];
+        s._cx = a * s._cx + (1 - a) * p._cx;
+        s._cy = a * s._cy + (1 - a) * p._cy;
+        if (typeof p.visibility === "number") s.visibility = p.visibility;
+        if (typeof p.presence === "number") s.presence = p.presence;
+      }
+      return smoothedCss;
+    }
+
+    // Skeleton
+    function drawSkeletonCssPoints(cssPoints) {
+      if (!toggleSkeleton.checked || !cssPoints) return;
+      const lw = Math.round(Number(skelLine.value));
+      const r  = Math.round(Number(skelDot.value));
+
+      ctx.save();
+      ctx.imageSmoothingEnabled = false;
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      ctx.strokeStyle = "#000";
+      ctx.fillStyle = "#000";
+      ctx.lineWidth = lw;
+
+      for (const [a,b] of POSE_CONNECTIONS) {
+        const pa = cssPoints[a], pb = cssPoints[b];
+        if (!pa || !pb) continue;
+        if (typeof pa.visibility === "number" && pa.visibility < 0.15) continue;
+        if (typeof pb.visibility === "number" && pb.visibility < 0.15) continue;
+        ctx.beginPath();
+        ctx.moveTo(pa._cx, pa._cy);
+        ctx.lineTo(pb._cx, pb._cy);
+        ctx.stroke();
+      }
+
+      for (const p of cssPoints) {
+        if (!p) continue;
+        if (typeof p.visibility === "number" && p.visibility < 0.15) continue;
+        ctx.beginPath();
+        ctx.arc(p._cx, p._cy, r, 0, Math.PI*2);
+        ctx.fill();
+      }
+
+      ctx.restore();
+    }
+
+    // Segmentation
+    const maskSrcCanvas = document.createElement("canvas");
+    const maskSrcCtx = maskSrcCanvas.getContext("2d", { willReadFrequently: false });
+
+    function drawMaskContainFromSource(srcCanvas, vw, vh) {
+      const cw = CSS_W, ch = CSS_H;
+      const scale = Math.min(cw / vw, ch / vh);
+      const dispW = vw * scale;
+      const dispH = vh * scale;
+      const offX = (cw - dispW) / 2;
+      const offY = (ch - dispH) / 2;
+      ctx.drawImage(srcCanvas, offX, offY, dispW, dispH);
+    }
+
+    function renderMaskToCanvas(segMask) {
+      if (!segMask) return { max: 0 };
+      const mw = segMask.width ?? 0;
+      const mh = segMask.height ?? 0;
+      if (!mw || !mh) return { max: 0 };
+
+      if (maskSrcCanvas.width !== mw || maskSrcCanvas.height !== mh) {
+        maskSrcCanvas.width = mw;
+        maskSrcCanvas.height = mh;
+      }
+
+      const threshold = Number(silThresh.value) / 100;
+      const alpha = Number(silOpacity.value);
+
+      let dataF = null, dataU = null;
+      try { if (typeof segMask.getAsFloat32Array === "function") dataF = segMask.getAsFloat32Array(); } catch(_) {}
+      if (!dataF) { try { if (typeof segMask.getAsUint8Array === "function") dataU = segMask.getAsUint8Array(); } catch(_) {} }
+
+      const img = maskSrcCtx.createImageData(mw, mh);
+      const d = img.data;
+      let maxv = 0;
+
+      if (dataF && dataF.length >= mw*mh) {
+        for (let i = 0; i < mw*mh; i++) {
+          const v = dataF[i];
+          if (v > maxv) maxv = v;
+          const a = (v >= threshold) ? Math.round(255 * alpha) : 0;
+          const o = i*4;
+          d[o] = 255; d[o+1] = 215; d[o+2] = 0; d[o+3] = a;
+        }
+      } else if (dataU && dataU.length >= mw*mh) {
+        for (let i = 0; i < mw*mh; i++) {
+          const v = dataU[i] / 255;
+          if (v > maxv) maxv = v;
+          const a = (v >= threshold) ? Math.round(255 * alpha) : 0;
+          const o = i*4;
+          d[o] = 255; d[o+1] = 215; d[o+2] = 0; d[o+3] = a;
+        }
+      }
+
+      maskSrcCtx.putImageData(img, 0, 0);
+      return { max: maxv };
+    }
+
+    function drawSilhouette(segMask) {
+      if (!toggleSilhouette.checked || !segMask) return { max: 0 };
+      const vw = video.videoWidth || 0;
+      const vh = video.videoHeight || 0;
+      if (!vw || !vh) return { max: 0 };
+
+      const info = renderMaskToCanvas(segMask);
+      if (info.max > 0) drawMaskContainFromSource(maskSrcCanvas, vw, vh);
+      return info;
+    }
+
+    // Head center (ears midpoint)
+    function headCenterNorm(raw) {
+      const le = raw[7], re = raw[8];
+      const lEye = raw[2], rEye = raw[5];
+      if (le && re) return { x:(le.x+re.x)/2, y:(le.y+re.y)/2 };
+      if (lEye && rEye) return { x:(lEye.x+rEye.x)/2, y:(lEye.y+rEye.y)/2 };
+      return null;
+    }
+
+    function headCenterCss(cssPoints) {
+      const le = cssPoints[7], re = cssPoints[8];
+      const lEye = cssPoints[2], rEye = cssPoints[5];
+      if (le && re) return { _cx:(le._cx+re._cx)/2, _cy:(le._cy+re._cy)/2 };
+      if (lEye && rEye) return { _cx:(lEye._cx+rEye._cx)/2, _cy:(lEye._cy+rEye._cy)/2 };
+      return null;
+    }
+
+    function isProfileLikely(raw){
+      const ls = raw[11], rs = raw[12];
+      if(!ls || !rs) return false;
+      return Math.abs(ls.x - rs.x) < 0.055;
+    }
+
+    function estimateFacingSign(raw, head, shoulder) {
+      const nose = raw[0];
+      if (nose && head) {
+        const dx = nose.x - head.x;
+        if (Math.abs(dx) > 0.003) return dx > 0 ? 1 : -1;
+      }
+      if (head && shoulder) {
+        const dx = head.x - shoulder.x;
+        if (Math.abs(dx) > 0.003) return dx > 0 ? 1 : -1;
+      }
+      return 1;
+    }
+
+    // --- HWS state (PROFILE: compare neck vector to vertical; NON-PROFILE: torso-relative)
+    let neckAngleEma = null;
+    let neckState = "unknown"; // "green" | "redFlex" | "redExt" | "amber" | "unknown"
+    let neckSince = 0;
+    let neckNeutralAuto = null;
+    let neckCalibSamples = [];
+
+    function resetNeckState(){
+      neckAngleEma = null;
+      neckState = "unknown";
+      neckSince = 0;
+      neckNeutralAuto = null;
+      neckCalibSamples = [];
+    }
+
+    function drawNeckAxis(rawNorm, cssPoints, nowTs) {
+      if (!toggleNeck.checked || !rawNorm || !cssPoints) {
+        return { neckDeg: null, state: "unknown", neutral: null, d: null, profile:false, facing:1 };
+      }
+
+      const ls = rawNorm[11], rs = rawNorm[12];
+      const lh = rawNorm[23], rh = rawNorm[24];
+      if (!ls || !rs || !lh || !rh) {
+        return { neckDeg: null, state: "unknown", neutral: null, d: null, profile:false, facing:1 };
+      }
+
+      const shoulder = { x:(ls.x+rs.x)/2, y:(ls.y+rs.y)/2 };
+      const hip      = { x:(lh.x+rh.x)/2, y:(lh.y+rh.y)/2 };
+      const head     = headCenterNorm(rawNorm);
+      if (!head) {
+        return { neckDeg: null, state: "unknown", neutral: null, d: null, profile:false, facing:1 };
+      }
+
+      const profile = isProfileLikely(rawNorm);
+      const facing  = estimateFacingSign(rawNorm, head, shoulder);
+
+      // Neck vector
+      const neckV = normVec({ x: head.x - shoulder.x, y: head.y - shoulder.y });
+
+      let ang = 0;
+
+      if (profile) {
+        // PROFILE MODE: compare to vertical "up"
+        const up = { x: 0, y: -1 };
+        ang = signedAngleDeg(up, neckV);
+        // normalize sign so + = forward (toward facing), - = backward (extension)
+        if (facing < 0) ang = -ang;
+      } else {
+        // NON-PROFILE: torso-relative
+        let torso = { x: shoulder.x - hip.x, y: shoulder.y - hip.y };
+        if (torso.y > 0) torso = { x:-torso.x, y:-torso.y };
+        torso = normVec(torso);
+        ang = signedAngleDeg(torso, neckV);
+      }
+
+      // EMA on the angle
+      const alpha = Number(neckEma.value);
+      if (neckAngleEma == null) neckAngleEma = ang;
+      else neckAngleEma = alpha*neckAngleEma + (1-alpha)*ang;
+
+      const neutralManual = Number(neckNeutral.value);
+      let neutral = (neckNeutralAuto != null) ? neckNeutralAuto : neutralManual;
+
+      // Auto neutral only for stand + profile (stabilizes "head slightly forward")
+      if (profile && filmingPreset.value === "stand") {
+        const d0 = neckAngleEma - neutralManual;
+        if (Math.abs(d0) < 22 && neckCalibSamples.length < 45) {
+          neckCalibSamples.push(neckAngleEma);
+          if (neckCalibSamples.length === 45) {
+            const sorted = neckCalibSamples.slice().sort((a,b)=>a-b);
+            neckNeutralAuto = sorted[Math.floor(sorted.length/2)];
+            neutral = neckNeutralAuto;
+          }
+        }
+        if (neckNeutralAuto != null) neutral = neckNeutralAuto;
+      }
+
+      const greenTol = Number(neckTol.value);
+      const redExtra = Number(neckRedExtra.value);
+      const flexThr = greenTol + redExtra;
+      const extThr  = greenTol + redExtra;
+
+      const d = neckAngleEma - neutral;
+
+      // Semantics:
+      // In profile: d>0 = forward head / flexion-ish, d<0 = backward / extension
+      // In non-profile: d>0 / d<0 depends on camera, but we keep same labels for consistency
+      let want = "amber";
+      if (Math.abs(d) <= greenTol) want = "green";
+      else if (d >=  flexThr) want = "redFlex";
+      else if (d <= -extThr)  want = "redExt";
+
+      const HOLD_MS = Number(neckHold.value);
+      if (want !== neckState) {
+        if (!neckSince) neckSince = nowTs;
+        if (nowTs - neckSince >= HOLD_MS) {
+          neckState = want;
+          neckSince = 0;
+        }
+      } else {
+        neckSince = 0;
+      }
+
+      // Draw axis
+      const cssLs = cssPoints[11], cssRs = cssPoints[12];
+      if (!cssLs || !cssRs) return { neckDeg: neckAngleEma, state: neckState, neutral, d, profile, facing };
+
+      const cssShoulder = { _cx:(cssLs._cx+cssRs._cx)/2, _cy:(cssLs._cy+cssRs._cy)/2 };
+      const cssHead = headCenterCss(cssPoints);
+      if (!cssHead) return { neckDeg: neckAngleEma, state: neckState, neutral, d, profile, facing };
+
+      let stroke = "rgba(255,140,0,0.95)";
+      if (neckState === "green") stroke = "rgba(0,180,0,0.95)";
+      if (neckState === "redFlex" || neckState === "redExt") stroke = "rgba(220,0,0,0.95)";
+
+      ctx.save();
+      ctx.lineCap = "round";
+      ctx.lineWidth = 6;
+      ctx.strokeStyle = stroke;
+      ctx.beginPath();
+      ctx.moveTo(cssShoulder._cx, cssShoulder._cy);
+      ctx.lineTo(cssHead._cx, cssHead._cy);
+      ctx.stroke();
+      ctx.restore();
+
+      return { neckDeg: neckAngleEma, state: neckState, neutral, d, profile, facing };
+    }
+
+    // Knee/leg checks
+    function colorForRatio(r) {
+      if (r <= 1.35) return "rgba(0,170,0,0.95)";
+      if (r <= 1.55) return "rgba(255,140,0,0.95)";
+      return "rgba(220,0,0,0.95)";
+    }
+
+    function drawLegChecks(raw, cssPoints) {
+      if (!toggleLegCheck.checked || !raw || !cssPoints) return { kneeRatio: null, kneeDiff: null, kneeAngles: [null,null] };
+
+      const kL = cssPoints[25], kR = cssPoints[26];
+      const sL = cssPoints[11], sR = cssPoints[12];
+      if (!kL || !kR || !sL || !sR) return { kneeRatio: null, kneeDiff: null, kneeAngles: [null,null] };
+
+      const shoulderW = distPx(sL, sR);
+      const kneeW = distPx(kL, kR);
+      const kneeRatio = (shoulderW > 1) ? (kneeW / shoulderW) : null;
+
+      const lh = raw[23], rh = raw[24], lk = raw[25], rk = raw[26], la = raw[27], ra = raw[28];
+      const aL = kneeAngle(lh, lk, la);
+      const aR = kneeAngle(rh, rk, ra);
+      const diff = (aL != null && aR != null) ? Math.abs(aL - aR) : null;
+
+      if (kneeRatio != null) {
+        ctx.save();
+        ctx.lineCap = "round";
+        ctx.lineWidth = 3;
+        ctx.setLineDash([7, 6]);
+        ctx.strokeStyle = colorForRatio(kneeRatio);
+        ctx.beginPath();
+        ctx.moveTo(kL._cx, kL._cy);
+        ctx.lineTo(kR._cx, kR._cy);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.restore();
+      }
+
+      return { kneeRatio, kneeDiff: diff, kneeAngles: [aL, aR] };
+    }
+
+    // Timer logic
+    let glideActive = false, glideStart = 0, currentElapsed = 0;
+    let scoreEma = 0, scoreStableSince = null, scoreLowSince = null;
+    let lastTorso = null;
+    const glideTimes = [];
+    const fmt = (ms)=> (ms/1000).toFixed(3) + " s";
+
+    function armOverHeadRobust(raw) {
+      const ls = raw[11], rs = raw[12];
+      const le = raw[13], re = raw[14];
+      const lw = raw[15], rw = raw[16];
+      const head = headCenterNorm(raw);
+      if (!ls || !rs) return 0;
+
+      const shoulderY = (ls.y + rs.y) / 2;
+      const headY = (head?.y ?? (shoulderY - 0.10));
+
+      const elbowMargin = 0.04;
+      const wristMargin = 0.02;
+
+      const leftWristUp = lw ? (lw.y < headY + wristMargin) : false;
+      const rightWristUp = rw ? (rw.y < headY + wristMargin) : false;
+
+      const leftElbowUp = le ? (le.y < shoulderY - elbowMargin) : false;
+      const rightElbowUp = re ? (re.y < shoulderY - elbowMargin) : false;
+
+      const leftScore = leftWristUp ? 1.0 : (leftElbowUp ? 0.7 : 0.0);
+      const rightScore = rightWristUp ? 1.0 : (rightElbowUp ? 0.7 : 0.0);
+
+      return Math.max(leftScore, rightScore);
+    }
+
+    function legsStraightScore(raw) {
+      const lh = raw[23], rh = raw[24], lk = raw[25], rk = raw[26], la = raw[27], ra = raw[28];
+      const aL = kneeAngle(lh, lk, la);
+      const aR = kneeAngle(rh, rk, ra);
+
+      const toScore = (ang) => {
+        if (ang == null) return 0;
+        if (ang <= 145) return 0;
+        if (ang >= 170) return 1;
+        return (ang - 145) / (170 - 145);
+      };
+
+      if (aL != null && aR != null) return Math.min(toScore(aL), toScore(aR));
+      return Math.max(toScore(aL), toScore(aR));
+    }
+
+    function bodyLongScore(raw) {
+      const ls = raw[11], rs = raw[12], lh = raw[23], rh = raw[24];
+      if (!ls || !rs || !lh || !rh) return 0;
+      const sh = { x:(ls.x+rs.x)/2, y:(ls.y+rs.y)/2 };
+      const hp = { x:(lh.x+rh.x)/2, y:(lh.y+rh.y)/2 };
+      const d = dist(sh, hp);
+      if (d <= 0.10) return 0;
+      if (d >= 0.14) return 1;
+      return (d - 0.10) / (0.14 - 0.10);
+    }
+
+    function stillnessScore(raw) {
+      const ls = raw[11], rs = raw[12], lh = raw[23], rh = raw[24];
+      if (!ls || !rs || !lh || !rh) return 0;
+
+      const sh = { x:(ls.x+rs.x)/2, y:(ls.y+rs.y)/2 };
+      const hp = { x:(lh.x+rh.x)/2, y:(lh.y+rh.y)/2 };
+      const torso = { x:(sh.x+hp.x)/2, y:(sh.y+hp.y)/2 };
+
+      const p = filmingPreset.value;
+      const tol = (p === "side45") ? 0.014 : 0.012;
+
+      if (!lastTorso) { lastTorso = torso; return 0.3; }
+      const move = Math.hypot(torso.x - lastTorso.x, torso.y - lastTorso.y);
+      lastTorso = torso;
+
+      const s = 1 - Math.min(1, move / tol);
+      return Math.max(0, s);
+    }
+
+    function computeGlideScore(raw) {
+      const arms = armOverHeadRobust(raw);
+      const legs = legsStraightScore(raw);
+      const longB = bodyLongScore(raw);
+      const still = stillnessScore(raw);
+      return (0.38*arms + 0.32*legs + 0.18*longB + 0.12*still);
+    }
+
+    function updateTimer(raw, now){
+      if(!toggleTimer.checked){
+        glideActive=false; currentElapsed=0;
+        scoreEma=0; scoreStableSince=null; scoreLowSince=null;
+        lastTorso=null;
+        return;
+      }
+
+      const p = filmingPreset.value;
+      const startThr = (p === "side45") ? 0.72 : 0.75;
+      const stopThr  = (p === "side45") ? 0.55 : 0.58;
+      const startHoldMs = (p === "side45") ? 130 : 160;
+      const stopHoldMs  = (p === "side45") ? 220 : 230;
+      const hardMaxMs = (p === "stand") ? 5000 : 6500;
+
+      const alpha = (p === "side45") ? 0.62 : 0.60;
+      const sNow = computeGlideScore(raw);
+      scoreEma = alpha*scoreEma + (1-alpha)*sNow;
+
+      const lh = raw[23], rh = raw[24], lk = raw[25], rk = raw[26], la = raw[27], ra = raw[28];
+      const aL = kneeAngle(lh, lk, la);
+      const aR = kneeAngle(rh, rk, ra);
+
+      const kneesBend = ((aL != null && aL < 158) || (aR != null && aR < 158));
+      const armScore = armOverHeadRobust(raw);
+      const armsDropped = armScore < 0.48;
+
+      const movementStop = kneesBend || armsDropped;
+
+      if(!glideActive){
+        currentElapsed = 0;
+        if(scoreEma >= startThr && glideTimes.length < 4){
+          if(scoreStableSince == null) scoreStableSince = now;
+          if(now - scoreStableSince >= startHoldMs){
+            glideActive = true;
+            glideStart = now;
+            scoreLowSince = null;
+          }
+        } else {
+          scoreStableSince = null;
+        }
+        return;
+      }
+
+      currentElapsed = now - glideStart;
+
+      if(currentElapsed >= hardMaxMs){
+        glideActive = false;
+        scoreStableSince = null;
+        scoreLowSince = null;
+        glideTimes.push(currentElapsed);
+        if(glideTimes.length > 4) glideTimes.length = 4;
+        currentElapsed = 0;
+        return;
+      }
+
+      if(movementStop){
+        if(scoreLowSince == null) scoreLowSince = now;
+        if(now - scoreLowSince >= 90){
+          glideActive = false;
+          scoreStableSince = null;
+          scoreLowSince = null;
+          glideTimes.push(now - glideStart);
+          if(glideTimes.length > 4) glideTimes.length = 4;
+          currentElapsed = 0;
+          return;
+        }
+      } else {
+        scoreLowSince = null;
+      }
+
+      if(scoreEma <= stopThr){
+        if(scoreLowSince == null) scoreLowSince = now;
+        if(now - scoreLowSince >= stopHoldMs){
+          glideActive = false;
+          scoreStableSince = null;
+          scoreLowSince = null;
+          glideTimes.push(now - glideStart);
+          if(glideTimes.length > 4) glideTimes.length = 4;
+          currentElapsed = 0;
+        }
+      } else {
+        if(!movementStop) scoreLowSince = null;
+      }
+    }
+
+    // Overlay + debug footer
+    function drawOverlay(debugText=""){
+      if(!toggleTimer.checked) {
+        if (debugText) drawDebugFooter(debugText);
+        return;
+      }
+
+      const isPortrait = CSS_H > CSS_W;
+      const x = 12, y = 12;
+      const w = isPortrait ? Math.min(420, CSS_W-24) : Math.min(680, CSS_W-24);
+      const h = isPortrait ? 140 : 90;
+      const r = 14;
+
+      ctx.save();
+      ctx.fillStyle="rgba(0,0,0,0.40)";
+      ctx.strokeStyle="rgba(255,255,255,0.55)";
+      ctx.lineWidth=2;
+
+      const rr=Math.min(r,w/2,h/2);
+      ctx.beginPath();
+      ctx.moveTo(x+rr,y);
+      ctx.arcTo(x+w,y,x+w,y+h,rr);
+      ctx.arcTo(x+w,y+h,x,y+h,rr);
+      ctx.arcTo(x,y+h,x,y,rr);
+      ctx.arcTo(x,y,x+w,y,rr);
+      ctx.closePath();
+      ctx.fill(); ctx.stroke();
+
+      ctx.fillStyle="white";
+      ctx.shadowBlur=0;
+
+      ctx.font = isPortrait ? "700 28px system-ui" : "700 24px system-ui";
+      ctx.fillText(glideActive ? fmt(currentElapsed) : "0.000 s", x+12, y+(isPortrait?36:30));
+
+      ctx.font="600 12px system-ui";
+      const presetLabel = filmingPreset.value==="stand" ? "Stand" : (filmingPreset.value==="side45" ? "45° seitlich" : "45° hinten");
+      ctx.fillText(`Timer Brust – Gleitphase | Aufnahme: ${presetLabel}`, x+12, y+(isPortrait?56:48));
+
+      ctx.font = isPortrait ? "14px system-ui" : "13px system-ui";
+      if (isPortrait) {
+        const baseY = y + 80;
+        for (let i=0;i<4;i++){
+          const t = glideTimes[i]!=null ? fmt(glideTimes[i]) : "—";
+          ctx.fillText(`Slot ${i+1}: ${t}`, x+12, baseY + i*16);
+        }
+      } else {
+        const lineY = y + 72;
+        const parts = [];
+        for (let i=0;i<4;i++){
+          const t = glideTimes[i]!=null ? fmt(glideTimes[i]) : "—";
+          parts.push(`S${i+1}: ${t}`);
+        }
+        let cx = x + 12;
+        for (const p of parts) {
+          ctx.fillText(p, cx, lineY);
+          cx += ctx.measureText(p).width + 18;
+          if (cx > x + w - 80) break;
+        }
+      }
+
+      ctx.restore();
+      if (debugText) drawDebugFooter(debugText);
+    }
+
+    function drawDebugFooter(text) {
+      const pad = 8;
+      const h = 18;
+      const y = CSS_H - h - 10;
+      const w = Math.min(CSS_W - 24, 980);
+      const x = 12;
+
+      ctx.save();
+      ctx.fillStyle = "rgba(0,0,0,0.25)";
+      ctx.strokeStyle = "rgba(255,255,255,0.25)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(x, y, w, h, 8);
+      else {
+        ctx.moveTo(x+8,y); ctx.arcTo(x+w,y,x+w,y+h,8); ctx.arcTo(x+w,y+h,x,y+h,8); ctx.arcTo(x,y+h,x,y,8); ctx.arcTo(x,y,x+w,y,8); ctx.closePath();
+      }
+      ctx.fill(); ctx.stroke();
+      ctx.fillStyle = "rgba(255,255,255,0.95)";
+      ctx.font = "11px system-ui";
+      ctx.fillText(text, x + pad, y + 13);
+      ctx.restore();
+    }
+
+    if (!CanvasRenderingContext2D.prototype.roundRect) {
+      CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
+        const rr = Math.min(r, w/2, h/2);
+        this.beginPath();
+        this.moveTo(x+rr, y);
+        this.arcTo(x+w, y, x+w, y+h, rr);
+        this.arcTo(x+w, y+h, x, y+h, rr);
+        this.arcTo(x, y+h, x, y, rr);
+        this.arcTo(x, y, x+w, y, rr);
+        this.closePath();
+        return this;
+      };
+    }
+
+    // Recording + tips
+    let recorder=null, recordedChunks=[], lastBlob=null;
+    let isRecording = false;
+
+    const recStats = { frames:0, kneeWide:0, kneeAsym:0, legsBent:0, headExt:0, headFlex:0, avgKneeRatioSum:0, avgKneeRatioN:0 };
+    function resetRecStats() { for (const k of Object.keys(recStats)) recStats[k] = 0; }
+
+    function clearTipsUI() {
+      tipsBox.style.display = "none";
+      hintList.innerHTML = "";
+      hintText.textContent = "";
+      hintMeta.textContent = "";
+    }
+
+    function showTechTipsFromStats() {
+      clearTipsUI();
+
+      if (!toggleHintBox.checked) return;
+      if (recStats.frames < 25) return;
+
+      const p = (n)=> n / Math.max(1, recStats.frames);
+      const thr = 0.22;
+      const issues = [];
+
+      if (p(recStats.kneeWide) >= thr) issues.push({ score:p(recStats.kneeWide), title:"Knie öffnen zu weit", tip:"Knie enger (≈ schulterbreit) anziehen – „Schere“ vermeiden." });
+      if (p(recStats.kneeAsym) >= thr) issues.push({ score:p(recStats.kneeAsym), title:"Beinschlag unsymmetrisch", tip:"Links/rechts ähnlich beugen/strecken – Symmetrie anstreben." });
+      if (p(recStats.legsBent) >= thr) issues.push({ score:p(recStats.legsBent), title:"Beine nicht gestreckt in der Gleitphase", tip:"Nach dem Beinschlag vollständig strecken – kurz stabil gleiten." });
+
+      if (p(recStats.headExt) >= thr) issues.push({ score:p(recStats.headExt), title:"Kopf überstreckt (HWS)", tip:"Nacken lang, Blick eher schräg nach unten/vorne (neutral)." });
+      if (p(recStats.headFlex) >= thr) issues.push({ score:p(recStats.headFlex), title:"Kopf zu tief (HWS-Flexion)", tip:"Kopf neutral: Blick leicht nach vorn/unten, nicht „Kinn auf Brust“." });
+
+      const shortGlides = glideTimes.filter(t => (t/1000) < 0.8).length;
+      if (glideTimes.length > 0 && shortGlides >= 1) issues.push({ score:0.30, title:"Gleitphase sehr kurz", tip:"Länger gleiten: nach dem Strecken ruhig halten, bevor die nächste Phase startet." });
+
+      issues.sort((a,b)=> b.score - a.score);
+      const top = issues.slice(0,3);
+      if (top.length === 0) return;
+
+      const avgRatio = (recStats.avgKneeRatioN > 0) ? (recStats.avgKneeRatioSum / recStats.avgKneeRatioN) : null;
+      hintMeta.textContent = `${recStats.frames} Frames` + (avgRatio ? ` • Ø Knie/Schulter ${avgRatio.toFixed(2)}×` : "");
+      hintText.textContent = "In dieser Aufnahme waren folgende Punkte über mehrere Frames deutlich auffällig:";
+
+      for (const it of top) {
+        const li = document.createElement("li");
+        li.innerHTML = `<b>${it.title}</b> – ${it.tip}`;
+        hintList.appendChild(li);
+      }
+
+      tipsBox.style.display = "block";
+    }
+
+    function pickMimeType(){
+      const candidates=[
+        'video/mp4;codecs="avc1.42E01E"',
+        'video/mp4;codecs="avc1.4D401E"',
+        "video/mp4",
+        'video/webm;codecs="vp8"',
+        "video/webm"
+      ];
+      if(!window.MediaRecorder || !MediaRecorder.isTypeSupported) return "";
+      for(const t of candidates){ try{ if(MediaRecorder.isTypeSupported(t)) return t; } catch(_){} }
+      return "";
+    }
+
+    function startRecordingCanvas(){
+      recordedChunks=[]; lastBlob=null; btnShare.disabled=true;
+      resetRecStats();
+      isRecording = true;
+
+      clearTipsUI();
+
+      const s = canvas.captureStream(15);
+      const mt = pickMimeType();
+      try{ recorder=new MediaRecorder(s, mt?{mimeType:mt}:undefined); }
+      catch(_){ recorder=new MediaRecorder(s); }
+
+      setStatus("Aufnahme läuft… (" + (recorder.mimeType || mt || "default") + ")");
+      recorder.ondataavailable=(e)=>{ if(e.data && e.data.size>0) recordedChunks.push(e.data); };
+      recorder.onstop=()=>{
+        isRecording = false;
+        const type = recorder.mimeType || mt || "video/webm";
+        lastBlob = new Blob(recordedChunks,{type});
+        btnShare.disabled = !lastBlob;
+        setStatus("Aufnahme fertig (" + (lastBlob.type.includes("mp4") ? "MP4" : "WebM") + ").");
+        showTechTipsFromStats();
+      };
+      recorder.start(200);
+    }
+
+    function stopRecordingCanvas(){ if(recorder && recorder.state!=="inactive") recorder.stop(); }
+
+    async function shareOrDownload(){
+      if(!lastBlob) return;
+      const type=lastBlob.type||"";
+      const ext=type.includes("mp4")?"mp4":(type.includes("webm")?"webm":"bin");
+      const fileName=`bewegungsanalyse_${new Date().toISOString().replace(/[:.]/g,"-")}.${ext}`;
+      const file=new File([lastBlob],fileName,{type:lastBlob.type});
+
+      if(navigator.canShare && navigator.canShare({files:[file]})){
+        await navigator.share({files:[file], title:"Bewegungsanalyse Recorder"});
+        setStatus("Geteilt/gespeichert ("+ext.toUpperCase()+").");
+        return;
+      }
+      const url=URL.createObjectURL(lastBlob);
+      const a=document.createElement("a");
+      a.href=url; a.download=fileName;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(()=>URL.revokeObjectURL(url),2000);
+      setStatus("Download gestartet ("+ext.toUpperCase()+").");
+    }
+
+    // MediaPipe
+    let landmarker = null;
+    let running = false;
+    let rafId = null;
+
+    const POSE_TASK_URL =
+      "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_heavy/float16/1/pose_landmarker_heavy.task";
+
+    async function createLandmarker(){
+      setStatus("Lade Tasks-WASM …");
       const fileset = await FilesetResolver.forVisionTasks(
         "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm"
       );
 
-      // Lite model: schnell und ausreichend für Unterricht
-      // (Sie können die .task Datei auch selbst hosten)
-      const modelUrl = "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/latest/pose_landmarker_lite.task";
-
-      poseLandmarker = await PoseLandmarker.createFromOptions(fileset, {
-        baseOptions: { modelAssetPath: modelUrl },
+      setStatus("Lade Pose Landmarker heavy …");
+      landmarker = await PoseLandmarker.createFromOptions(fileset, {
+        baseOptions: { modelAssetPath: POSE_TASK_URL },
         runningMode: "VIDEO",
-        numPoses: 1
+        numPoses: 1,
+        outputSegmentationMasks: true,
+        minPoseDetectionConfidence: Number(detConf.value),
+        minPosePresenceConfidence: Number(presConf.value),
+        minTrackingConfidence: Number(trackConf.value),
       });
-
-      drawingUtils = new DrawingUtils(ctx);
-      setStatus("PoseLandmarker bereit.");
     }
 
-    async function initCamera() {
-      setStatus("fordere Kamera an…");
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: "environment", // im Bad meist besser; ggf. "user"
-          width: { ideal: 1280 },
-          height: { ideal: 720 }
-        },
-        audio: false
+    function updateLandmarkerThresholds(){
+      if(!landmarker) return;
+      landmarker.setOptions({
+        minPoseDetectionConfidence: Number(detConf.value),
+        minPosePresenceConfidence: Number(presConf.value),
+        minTrackingConfidence: Number(trackConf.value),
+      });
+      setStatus("Schwellwerte aktualisiert.");
+    }
+    detConf.addEventListener("change", updateLandmarkerThresholds);
+    presConf.addEventListener("change", updateLandmarkerThresholds);
+    trackConf.addEventListener("change", updateLandmarkerThresholds);
+
+    // Camera
+    let isBackCamera = true;
+    let stream = null;
+
+    async function startCamera(){
+      stopCamera();
+      stream = await navigator.mediaDevices.getUserMedia({
+        audio:false,
+        video:{
+          facingMode: isBackCamera ? "environment" : "user",
+          width:{ideal:1280},
+          height:{ideal:720}
+        }
       });
       video.srcObject = stream;
 
-      await new Promise((res) => { video.onloadedmetadata = () => res(); });
+      await new Promise((resolve)=>{
+        const done=()=>resolve();
+        if(video.readyState>=1) return done();
+        video.onloadedmetadata = done;
+      });
+      await video.play();
 
-      // Canvas auf Videogröße setzen
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-
-      setStatus("Kamera aktiv. Pose-Overlay läuft.");
+      await new Promise((resolve)=>{
+        const check=()=> (video.videoWidth>0 && video.videoHeight>0) ? resolve() : requestAnimationFrame(check);
+        check();
+      });
     }
 
-    function drawSkeleton(result) {
-      // Hintergrund bewusst neutral (keine Person sichtbar)
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    function stopCamera(){
+      if(stream){ stream.getTracks().forEach(t=>t.stop()); stream=null; }
+      video.srcObject=null;
+    }
 
-      if (!result?.landmarks?.length) return;
+    // Loop
+    let emptyMaskFrames = 0;
 
-      // Landmarks: Array<NormalizedLandmark> pro Pose
-      const landmarks = result.landmarks[0];
+    function loop(){
+      if(!running || !landmarker) return;
 
-      // Zeichnen: Skelett + Punkte
-      drawingUtils.drawConnectors(landmarks, PoseLandmarker.POSE_CONNECTIONS, { lineWidth: 4 });
-      drawingUtils.drawLandmarks(landmarks, { radius: 3 });
+      try{
+        ctx.fillStyle = BG;
+        ctx.fillRect(0, 0, CSS_W, CSS_H);
 
-      // Optional: Beispiel-Winkel (Knie rechts), sehr simpel berechnet
-      // Indizes nach MediaPipe Pose: hip=24, knee=26, ankle=28 (rechte Seite)
-      const hip = landmarks[24], knee = landmarks[26], ankle = landmarks[28];
-      if (hip && knee && ankle) {
-        const ang = angleDeg(hip, knee, ankle);
-        ctx.font = "28px system-ui";
-        ctx.fillText(`Knie (R): ${Math.round(ang)}°`, 20, 40);
+        if(video.videoWidth===0 || video.videoHeight===0){
+          drawOverlay("DEBUG: video not ready");
+          rafId = requestAnimationFrame(loop);
+          return;
+        }
+
+        const ts = performance.now();
+        const result = landmarker.detectForVideo(video, ts);
+
+        const hasMask = !!(result?.segmentationMasks?.length);
+        const hasLandmarks = !!(result?.landmarks?.length && result.landmarks[0]?.length);
+
+        let maskInfo = { max: 0 };
+        if (hasMask) {
+          maskInfo = drawSilhouette(result.segmentationMasks[0]);
+          if (maskInfo.max <= 0.001) emptyMaskFrames++;
+          else emptyMaskFrames = 0;
+
+          if (emptyMaskFrames > 45) {
+            toggleSilhouette.checked = false;
+            setStatus("Hinweis: Segmentierung liefert leere Werte → deaktiviert.");
+          }
+        }
+
+        if (hasLandmarks) {
+          const raw = result.landmarks[0];
+          const vw = video.videoWidth, vh = video.videoHeight;
+          const cssPoints = emaCss(mapLandmarksContain(raw, vw, vh, CSS_W, CSS_H));
+
+          drawSkeletonCssPoints(cssPoints);
+
+          const neck = drawNeckAxis(raw, cssPoints, ts);
+          const legs = drawLegChecks(raw, cssPoints);
+
+          updateTimer(raw, ts);
+
+          if (isRecording) {
+            recStats.frames++;
+
+            if (legs.kneeRatio != null) {
+              recStats.avgKneeRatioSum += legs.kneeRatio;
+              recStats.avgKneeRatioN++;
+              if (legs.kneeRatio > 1.55) recStats.kneeWide++;
+            }
+            if (legs.kneeDiff != null && legs.kneeDiff > 25) recStats.kneeAsym++;
+
+            const [aL, aR] = legs.kneeAngles || [null,null];
+            const bent = ((aL != null && aL < 155) || (aR != null && aR < 155));
+            if (toggleTimer.checked && glideActive && bent) recStats.legsBent++;
+
+            if (toggleTimer.checked && glideActive && neck?.state) {
+              if (neck.state === "redExt") recStats.headExt++;
+              if (neck.state === "redFlex") recStats.headFlex++;
+            }
+          }
+
+          const neckDbg = (neck && neck.neckDeg != null)
+            ? `neck=${neck.neckDeg.toFixed(1)}° n=${(neck.neutral??0).toFixed(1)} d=${(neck.d??0).toFixed(1)} ${neck.state} prof=${neck.profile?1:0} face=${neck.facing}`
+            : `neck=—`;
+
+          drawOverlay(`DEBUG: lm=${raw.length} mask=${hasMask?1:0} maskmax=${(maskInfo.max??0).toFixed(3)} score=${scoreEma.toFixed(2)} ${neckDbg} ui=${isPortraitUI()?"P":"L"}`);
+        } else {
+          drawOverlay(`DEBUG: lm=0 mask=${hasMask?1:0} maskmax=${(maskInfo.max??0).toFixed(3)} ui=${isPortraitUI()?"P":"L"}`);
+        }
+
+        rafId = requestAnimationFrame(loop);
+      } catch(e){
+        console.error(e);
+        setStatus("Loop-Fehler: " + (e?.message || String(e)));
+        ctx.fillStyle = BG;
+        ctx.fillRect(0, 0, CSS_W, CSS_H);
+        ctx.fillStyle = "rgba(0,0,0,0.85)";
+        ctx.font = "16px system-ui";
+        ctx.fillText("Loop-Fehler: " + (e?.message || String(e)), 20, 40);
       }
     }
 
-    function angleDeg(a, b, c) {
-      // Winkel ABC
-      const abx = a.x - b.x, aby = a.y - b.y;
-      const cbx = c.x - b.x, cby = c.y - b.y;
-      const dot = abx*cbx + aby*cby;
-      const mag1 = Math.hypot(abx, aby);
-      const mag2 = Math.hypot(cbx, cby);
-      const cos = dot / (mag1 * mag2 + 1e-9);
-      const clamped = Math.max(-1, Math.min(1, cos));
-      return Math.acos(clamped) * (180 / Math.PI);
-    }
+    // Buttons
+    btnInit.addEventListener("click", async ()=>{
+      try{
+        btnInit.disabled=true;
+        applyLayoutFromOrientation();
+        setStatus("Initialisiere …");
+        await createLandmarker();
+        await startCamera();
 
-    function loop() {
-      const nowMs = performance.now();
-      const res = poseLandmarker.detectForVideo(video, nowMs);
-      drawSkeleton(res);
-      rafId = requestAnimationFrame(loop);
-    }
+        running=true;
+        btnSwitch.disabled=false;
+        btnRec.disabled=false;
+        btnReset.disabled=false;
 
-    function startLoop() {
-      if (rafId) cancelAnimationFrame(rafId);
-      rafId = requestAnimationFrame(loop);
-    }
+        clearTipsUI();
+        emptyMaskFrames = 0;
+        resetNeckState();
 
-    function stopLoop() {
-      if (rafId) cancelAnimationFrame(rafId);
-      rafId = null;
-    }
-
-    function startRecording() {
-      recordedChunks = [];
-      lastBlob = null;
-      btnShare.disabled = true;
-
-      const fps = 15; // für iPhones meist stabil genug
-      const stream = canvas.captureStream(fps);
-
-      const mimeType = pickMimeType();
-      const options = mimeType ? { mimeType } : undefined;
-
-      recorder = new MediaRecorder(stream, options);
-      recorder.ondataavailable = (e) => {
-        if (e.data && e.data.size > 0) recordedChunks.push(e.data);
-      };
-      recorder.onstop = () => {
-        lastBlob = new Blob(recordedChunks, { type: recorder.mimeType || "video/webm" });
-        btnShare.disabled = !lastBlob;
-        setStatus(`Aufnahme fertig (${Math.round(lastBlob.size/1024)} KB).`);
-      };
-
-      recorder.start(200); // alle 200ms Chunks
-      setStatus("Aufnahme läuft…");
-    }
-
-    function stopRecording() {
-      if (recorder && recorder.state !== "inactive") recorder.stop();
-    }
-
-    async function shareOrDownload() {
-      if (!lastBlob) return;
-      const ext = (lastBlob.type.includes("mp4")) ? "mp4" : "webm";
-      const file = new File([lastBlob], `pose_${new Date().toISOString().replace(/[:.]/g,"-")}.${ext}`, { type: lastBlob.type });
-
-      // iOS: Share Sheet ist oft der sauberste Weg
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({ files: [file], title: "Pose-Aufnahme" });
-        setStatus("Geteilt/gespeichert.");
-        return;
-      }
-
-      // Fallback: Download-Link
-      const url = URL.createObjectURL(lastBlob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = file.name;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 2000);
-      setStatus("Download gestartet (Fallback).");
-    }
-
-    btnInit.addEventListener("click", async () => {
-      try {
-        btnInit.disabled = true;
-        await initPose();
-        await initCamera();
-        startLoop();
-        btnRec.disabled = false;
-        setStatus("bereit für Aufnahme.");
-      } catch (err) {
-        console.error(err);
-        setStatus("Fehler: " + (err?.message || err));
-        btnInit.disabled = false;
+        setStatus("bereit.");
+        rafId = requestAnimationFrame(loop);
+      } catch(e){
+        console.error(e);
+        setStatus("Fehler: " + (e?.message || String(e)));
+        btnInit.disabled=false;
       }
     });
 
-    btnRec.addEventListener("click", () => {
-      btnRec.disabled = true;
-      btnStop.disabled = false;
-      startRecording();
+    btnSwitch.addEventListener("click", async ()=>{
+      try{
+        btnSwitch.disabled=true;
+        running=false;
+        if(rafId) cancelAnimationFrame(rafId);
+
+        isBackCamera=!isBackCamera;
+        await startCamera();
+
+        smoothedCss = null;
+        emptyMaskFrames = 0;
+
+        glideActive=false; glideStart=0; currentElapsed=0;
+        scoreEma=0; scoreStableSince=null; scoreLowSince=null;
+        lastTorso=null;
+
+        clearTipsUI();
+        resetNeckState();
+
+        running=true;
+        rafId = requestAnimationFrame(loop);
+
+        btnSwitch.disabled=false;
+        setStatus("Kamera gewechselt.");
+      } catch(e){
+        console.error(e);
+        setStatus("Kamerawechsel-Fehler: " + (e?.message || String(e)));
+        running=true;
+        rafId = requestAnimationFrame(loop);
+        btnSwitch.disabled=false;
+      }
     });
 
-    btnStop.addEventListener("click", () => {
-      btnStop.disabled = true;
-      stopRecording();
-      btnRec.disabled = false;
+    btnRec.addEventListener("click", ()=>{
+      btnRec.disabled=true;
+      btnStop.disabled=false;
+      startRecordingCanvas();
     });
 
-    btnShare.addEventListener("click", () => shareOrDownload());
+    btnStop.addEventListener("click", ()=>{
+      btnStop.disabled=true;
+      stopRecordingCanvas();
+      btnRec.disabled=false;
+    });
+
+    btnShare.addEventListener("click", ()=>shareOrDownload());
+
+    btnReset.addEventListener("click", ()=>{
+      glideTimes.length=0;
+      glideActive=false; glideStart=0; currentElapsed=0;
+      scoreEma=0; scoreStableSince=null; scoreLowSince=null;
+      setStatus("Slots zurückgesetzt.");
+      clearTipsUI();
+      resetNeckState();
+    });
   </script>
 </body>
 </html>
