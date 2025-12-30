@@ -1218,7 +1218,7 @@
       const file=new File([lastBlob],fileName,{type:lastBlob.type});
 
       if(navigator.canShare && navigator.canShare({files:[file]})){
-        await navigator.share({files:[file], title:"Bewegungsanalyse Recorder"});
+        await navigator.share({files:[file], title:"Anonyme Bewegungsanalyse"});
         setStatus("Geteilt/gespeichert ("+ext.toUpperCase()+").");
         return;
       }
