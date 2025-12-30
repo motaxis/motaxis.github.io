@@ -325,7 +325,6 @@
           <textarea name="message" placeholder="Was ist passiert? (Gerät/Browser, Aufnahmewinkel, Schritte zum Reproduzieren, ggf. Screenshot-Beschreibung)"></textarea>
         </div>
 
-        <!-- Ein paar nützliche Kontextfelder (automatisch befüllt) -->
         <input type="hidden" name="app" value="MOTAXIS" />
         <input type="hidden" name="version" value="2025-12-30" />
         <input type="hidden" id="fbMeta" name="meta" value="" />
@@ -487,6 +486,14 @@
     const dist = (a,b)=>Math.hypot(a.x-b.x, a.y-b.y);
     const distPx = (a,b)=>Math.hypot(a._cx-b._cx, a._cy-b._cy);
     const distXPx = (a,b)=>Math.abs(a._cx - b._cx); // horizontal distance (X) in CSS px
+
+    // Robust landmark "ok" (visibility/presence if available)
+    function lmOk(p, thr = 0.35) {
+      if (!p) return false;
+      const vOk = (typeof p.visibility !== "number") || (p.visibility >= thr);
+      const pOk = (typeof p.presence !== "number") || (p.presence >= thr);
+      return vOk && pOk;
+    }
 
     function angleBetween(u, v) {
       const dot = u.x*v.x + u.y*v.y;
@@ -652,7 +659,7 @@
       return info;
     }
 
-    // Head center helpers (kept for neck), but timer will not depend on head center.
+    // Head center helpers (kept for neck + best-of arms)
     function headCenterNorm(raw) {
       const le = raw[7], re = raw[8];
       const lEye = raw[2], rEye = raw[5];
@@ -807,20 +814,31 @@
     }
 
     function drawLegChecks(raw, cssPoints) {
-      if (!toggleLegCheck.checked || !raw || !cssPoints) return { kneeRatio: null, kneeDiff: null, kneeAngles: [null,null] };
+      if (!toggleLegCheck.checked || !raw || !cssPoints) {
+        return { kneeRatio: null, kneeDiff: null, kneeAngles: [null,null], asymValid:false };
+      }
 
       const kL = cssPoints[25], kR = cssPoints[26];
       const sL = cssPoints[11], sR = cssPoints[12];
-      if (!kL || !kR || !sL || !sR) return { kneeRatio: null, kneeDiff: null, kneeAngles: [null,null] };
+      if (!kL || !kR || !sL || !sR) {
+        return { kneeRatio: null, kneeDiff: null, kneeAngles: [null,null], asymValid:false };
+      }
 
       const shoulderW = distPx(sL, sR);
       const kneeW = distPx(kL, kR);
       const kneeRatio = (shoulderW > 1) ? (kneeW / shoulderW) : null;
 
+      // Asymmetrie nur, wenn die relevanten Bein-Landmarks wirklich "da" sind (sonst False Tips)
       const lh = raw[23], rh = raw[24], lk = raw[25], rk = raw[26], la = raw[27], ra = raw[28];
-      const aL = kneeAngle(lh, lk, la);
-      const aR = kneeAngle(rh, rk, ra);
-      const diff = (aL != null && aR != null) ? Math.abs(aL - aR) : null;
+
+      const leftLegOk  = lmOk(lh) && lmOk(lk) && lmOk(la);
+      const rightLegOk = lmOk(rh) && lmOk(rk) && lmOk(ra);
+      const asymValid = leftLegOk && rightLegOk;
+
+      const aL = leftLegOk  ? kneeAngle(lh, lk, la) : null;
+      const aR = rightLegOk ? kneeAngle(rh, rk, ra) : null;
+
+      const diff = (asymValid && aL != null && aR != null) ? Math.abs(aL - aR) : null;
 
       if (kneeRatio != null) {
         ctx.save();
@@ -836,11 +854,10 @@
         ctx.restore();
       }
 
-      return { kneeRatio, kneeDiff: diff, kneeAngles: [aL, aR] };
+      return { kneeRatio, kneeDiff: diff, kneeAngles: [aL, aR], asymValid };
     }
 
-    // Hand axis (only OUTSIDE glide phase + more tolerance):
-    // Thresholds: Grün <= 2.10, Orange <= 2.50, Rot > 2.50
+    // Hand axis thresholds: Grün <= 2.10, Orange <= 2.50, Rot > 2.50
     function colorForHandRatio(r) {
       if (r <= 2.10) return "rgba(0,170,0,0.95)";
       if (r <= 2.50) return "rgba(255,140,0,0.95)";
@@ -854,33 +871,76 @@
     const glideTimes = [];
     const fmt = (ms)=> (ms/1000).toFixed(3) + " s";
 
-    // Arms up score WITHOUT head center (more robust in stand + swim)
+    // Arms up score: BEST-OF (Schulter-basiert + optional Kopf-basiert, wenn zuverlässig)
     function armsUpScore(raw) {
       const ls = raw[11], rs = raw[12];
       const le = raw[13], re = raw[14];
       const lw = raw[15], rw = raw[16];
       if (!ls || !rs) return 0;
 
+      // Schulter-Referenz (robust im Stand / frontal)
       const shoulderY = (ls.y + rs.y) / 2;
 
-      const wristMargin = 0.06;
-      const leftWristUp  = lw ? (lw.y < shoulderY - wristMargin) : false;
-      const rightWristUp = rw ? (rw.y < shoulderY - wristMargin) : false;
+      // Schulter-basiertes Scoring
+      const wristMarginS = 0.07;
+      const elbowMarginS = 0.04;
 
-      const elbowMargin = 0.03;
-      const leftElbowUp  = le ? (le.y < shoulderY - elbowMargin) : false;
-      const rightElbowUp = re ? (re.y < shoulderY - elbowMargin) : false;
+      const leftWristUpS  = lw ? (lw.y < shoulderY - wristMarginS) : false;
+      const rightWristUpS = rw ? (rw.y < shoulderY - wristMarginS) : false;
+      const leftElbowUpS  = le ? (le.y < shoulderY - elbowMarginS) : false;
+      const rightElbowUpS = re ? (re.y < shoulderY - elbowMarginS) : false;
 
-      const leftScore  = leftWristUp ? 1.0 : (leftElbowUp ? 0.7 : 0.0);
-      const rightScore = rightWristUp ? 1.0 : (rightElbowUp ? 0.7 : 0.0);
+      const leftScoreS  = leftWristUpS ? 1.0 : (leftElbowUpS ? 0.7 : 0.0);
+      const rightScoreS = rightWristUpS ? 1.0 : (rightElbowUpS ? 0.7 : 0.0);
+      const shoulderScore = Math.max(leftScoreS, rightScoreS);
 
-      return Math.max(leftScore, rightScore);
+      // Optional: Kopf-Referenz (hilft oft bei side45 / Schwimmen)
+      const head = headCenterNorm(raw);
+
+      const headReliable =
+        (lmOk(raw[7]) && lmOk(raw[8])) || // ears
+        (lmOk(raw[2]) && lmOk(raw[5]));   // eyes
+
+      let headScore = 0;
+      if (head && headReliable) {
+        const headY = head.y;
+
+        const wristMarginH = 0.02;
+        const elbowMarginH = 0.04;
+
+        const leftWristUpH  = lw ? (lw.y < headY + wristMarginH) : false;
+        const rightWristUpH = rw ? (rw.y < headY + wristMarginH) : false;
+
+        // Ellbogen weiterhin relativ zu Schulter
+        const leftElbowUpH  = le ? (le.y < shoulderY - elbowMarginH) : false;
+        const rightElbowUpH = re ? (re.y < shoulderY - elbowMarginH) : false;
+
+        const leftScoreH  = leftWristUpH ? 1.0 : (leftElbowUpH ? 0.7 : 0.0);
+        const rightScoreH = rightWristUpH ? 1.0 : (rightElbowUpH ? 0.7 : 0.0);
+        headScore = Math.max(leftScoreH, rightScoreH);
+      }
+
+      const p = filmingPreset.value;
+
+      if ((p === "side45" || p === "back45") && headScore > 0) {
+        return Math.max(headScore, shoulderScore * 0.60);
+      }
+
+      if (p === "stand" && headScore > 0) {
+        return Math.max(shoulderScore, headScore * 0.85);
+      }
+
+      return shoulderScore;
     }
 
     function legsStraightScore(raw) {
       const lh = raw[23], rh = raw[24], lk = raw[25], rk = raw[26], la = raw[27], ra = raw[28];
-      const aL = kneeAngle(lh, lk, la);
-      const aR = kneeAngle(rh, rk, ra);
+
+      const leftOk  = lmOk(lh) && lmOk(lk) && lmOk(la);
+      const rightOk = lmOk(rh) && lmOk(rk) && lmOk(ra);
+
+      const aL = leftOk  ? kneeAngle(lh, lk, la) : null;
+      const aR = rightOk ? kneeAngle(rh, rk, ra) : null;
 
       const toScore = (ang) => {
         if (ang == null) return 0;
@@ -956,8 +1016,12 @@
       else scoreEma = alpha*scoreEma + (1-alpha)*sNow;
 
       const lh = raw[23], rh = raw[24], lk = raw[25], rk = raw[26], la = raw[27], ra = raw[28];
-      const aL = kneeAngle(lh, lk, la);
-      const aR = kneeAngle(rh, rk, ra);
+
+      const leftOk  = lmOk(lh) && lmOk(lk) && lmOk(la);
+      const rightOk = lmOk(rh) && lmOk(rk) && lmOk(ra);
+
+      const aL = leftOk  ? kneeAngle(lh, lk, la) : null;
+      const aR = rightOk ? kneeAngle(rh, rk, ra) : null;
 
       const kneeStopThr = (p === "side45") ? 148 : 156;
       const kneesBend = ((aL != null && aL < kneeStopThr) || (aR != null && aR < kneeStopThr));
@@ -1025,7 +1089,6 @@
 
     // Hand-axis drawing + measurement (GATED: only when NOT glideActive)
     function drawHandAxis(raw, cssPoints) {
-      // Only evaluate/draw outside glide phase (i.e., during arm pull)
       if (toggleTimer.checked && glideActive) return { handRatio: null, gated: true };
 
       if (!toggleHandAxis.checked || !raw || !cssPoints) return { handRatio: null, gated: false };
@@ -1163,14 +1226,18 @@
 
     // Hand detection (only during arm pull phase i.e. outside glideActive)
     let handWideStreak = 0;
-    const HAND_RED_THR = 2.50;       // align with red threshold (> 2.50)
-    const HAND_STREAK_FRAMES = 8;    // consecutive frames required
+    const HAND_RED_THR = 2.50;
+    const HAND_STREAK_FRAMES = 8;
 
     const recStats = {
       frames:0,
-      kneeWide:0, kneeAsym:0, legsBent:0,
-      headExt:0, headFlex:0,
-      avgKneeRatioSum:0, avgKneeRatioN:0,
+      kneeWide:0,
+      kneeAsym:0,
+      legsBent:0,
+      headExt:0,
+      headFlex:0,
+      avgKneeRatioSum:0,
+      avgKneeRatioN:0,
 
       // Only count hand metrics during arm-pull (non-glide)
       armPullFrames: 0,
@@ -1201,13 +1268,13 @@
 
       if (p(recStats.kneeWide) >= thr) issues.push({ score:p(recStats.kneeWide), title:"Knie öffnen zu weit", tip:"Knie enger (≈ schulterbreit) anziehen – „Schere“ vermeiden." });
 
+      // Optimiert: Asymmetrie wird jetzt nur gezählt, wenn Beine wirklich valide erkannt wurden.
       if (filmingPreset.value !== "side45") {
         if (p(recStats.kneeAsym) >= thr) issues.push({ score:p(recStats.kneeAsym), title:"Beinschlag unsymmetrisch", tip:"Links/rechts ähnlich beugen/strecken – Symmetrie anstreben." });
       }
 
       if (p(recStats.legsBent) >= thr) issues.push({ score:p(recStats.legsBent), title:"Beine nicht gestreckt in der Gleitphase", tip:"Nach dem Beinschlag vollständig strecken – kurz stabil gleiten." });
 
-      // Hand issue only based on arm-pull window
       const armPullDen = Math.max(1, recStats.armPullFrames);
       const handWideShare = recStats.handWideFrames / armPullDen;
       if (handWideShare >= 0.18) issues.push({
@@ -1436,8 +1503,9 @@
               if (legs.kneeRatio > 1.55) recStats.kneeWide++;
             }
 
+            // OPTIMIERT: Asymmetrie nur zählen, wenn beide Beine valide im Bild erkannt wurden
             if (filmingPreset.value !== "side45") {
-              if (legs.kneeDiff != null && legs.kneeDiff > 25) recStats.kneeAsym++;
+              if (legs.asymValid && legs.kneeDiff != null && legs.kneeDiff > 25) recStats.kneeAsym++;
             }
 
             const [aL, aR] = legs.kneeAngles || [null,null];
@@ -1459,7 +1527,6 @@
                 handWideStreak = 0;
               }
 
-              // count only if it persists across multiple consecutive frames
               if (handWideStreak >= HAND_STREAK_FRAMES) {
                 recStats.handWideFrames++;
               }
@@ -1472,7 +1539,9 @@
 
           const gateDbg = (hands && hands.gated) ? "handGate=1" : "handGate=0";
 
-          drawOverlay(`DEBUG: lm=${raw.length} mask=${hasMask?1:0} maskmax=${(maskInfo.max??0).toFixed(3)} score=${scoreEma.toFixed(2)} ${handDbg} ${gateDbg} rec=${isRecording?1:0} ui=${isPortraitUI()?"P":"L"}`);
+          const legDbg = legs?.asymValid ? "legOK=1" : "legOK=0";
+
+          drawOverlay(`DEBUG: lm=${raw.length} mask=${hasMask?1:0} maskmax=${(maskInfo.max??0).toFixed(3)} score=${scoreEma.toFixed(2)} ${handDbg} ${gateDbg} ${legDbg} rec=${isRecording?1:0} ui=${isPortraitUI()?"P":"L"}`);
         } else {
           drawOverlay(`DEBUG: lm=0 mask=${hasMask?1:0} maskmax=${(maskInfo.max??0).toFixed(3)} rec=${isRecording?1:0} ui=${isPortraitUI()?"P":"L"}`);
         }
