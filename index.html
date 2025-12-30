@@ -227,6 +227,10 @@
       <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap;">
         <label><input type="checkbox" id="toggleNeck" checked /> HWS-Achse (Brust)</label>
         <label><input type="checkbox" id="toggleLegCheck" checked /> Knie/Beine-Check (Brust)</label>
+
+        <!-- NEU -->
+        <label><input type="checkbox" id="toggleHandAxis" checked /> Hand-Achse (Brust)</label>
+
         <label><input type="checkbox" id="toggleTimer" checked /> Timer Brust – Gleitphase</label>
         <label><input type="checkbox" id="toggleHintBox" checked /> Techniktipps nach Stop</label>
       </div>
@@ -241,6 +245,13 @@
           <summary>Knie öffnen zu weit („Schere“ / Bremsfläche)</summary>
           <p class="hint"><b>Faustregel:</b> Knieöffnung ungefähr <b>Schulterbreite</b>. Richtwert: Knie/Schulter <b>&gt; 1,55×</b>.</p>
         </details>
+
+        <!-- NEU -->
+        <details>
+          <summary>Arme/Hände zu weit geöffnet (Bremsfläche)</summary>
+          <p class="hint"><b>Faustregel:</b> Hände in der Gleit-/Streckphase nur <b>leicht</b> breiter als Schultern. Richtwert: Hand/Schulter <b>&gt; 1,45×</b>.</p>
+        </details>
+
         <details>
           <summary>Beinschlag unsymmetrisch</summary>
           <p class="hint">Richtwert: Differenz Knie-Winkel <b>&gt; 25–30°</b> über mehrere Frames.</p>
@@ -299,6 +310,10 @@
 
     const toggleNeck = document.getElementById("toggleNeck");
     const toggleLegCheck = document.getElementById("toggleLegCheck");
+
+    // NEU
+    const toggleHandAxis = document.getElementById("toggleHandAxis");
+
     const toggleTimer = document.getElementById("toggleTimer");
     const toggleHintBox = document.getElementById("toggleHintBox");
     const filmingPreset = document.getElementById("filmingPreset");
@@ -659,20 +674,16 @@
       let ang = 0;
 
       if (profile) {
-        // PROFILE MODE: compare to vertical "up"
         const up = { x: 0, y: -1 };
         ang = signedAngleDeg(up, neckV);
-        // normalize sign so + = forward (toward facing), - = backward (extension)
         if (facing < 0) ang = -ang;
       } else {
-        // NON-PROFILE: torso-relative
         let torso = { x: shoulder.x - hip.x, y: shoulder.y - hip.y };
         if (torso.y > 0) torso = { x:-torso.x, y:-torso.y };
         torso = normVec(torso);
         ang = signedAngleDeg(torso, neckV);
       }
 
-      // EMA on the angle
       const alpha = Number(neckEma.value);
       if (neckAngleEma == null) neckAngleEma = ang;
       else neckAngleEma = alpha*neckAngleEma + (1-alpha)*ang;
@@ -680,7 +691,6 @@
       const neutralManual = Number(neckNeutral.value);
       let neutral = (neckNeutralAuto != null) ? neckNeutralAuto : neutralManual;
 
-      // Auto neutral only for stand + profile (stabilizes "head slightly forward")
       if (profile && filmingPreset.value === "stand") {
         const d0 = neckAngleEma - neutralManual;
         if (Math.abs(d0) < 22 && neckCalibSamples.length < 45) {
@@ -701,9 +711,6 @@
 
       const d = neckAngleEma - neutral;
 
-      // Semantics:
-      // In profile: d>0 = forward head / flexion-ish, d<0 = backward / extension
-      // In non-profile: d>0 / d<0 depends on camera, but we keep same labels for consistency
       let want = "amber";
       if (Math.abs(d) <= greenTol) want = "green";
       else if (d >=  flexThr) want = "redFlex";
@@ -720,7 +727,6 @@
         neckSince = 0;
       }
 
-      // Draw axis
       const cssLs = cssPoints[11], cssRs = cssPoints[12];
       if (!cssLs || !cssRs) return { neckDeg: neckAngleEma, state: neckState, neutral, d, profile, facing };
 
@@ -783,6 +789,43 @@
       }
 
       return { kneeRatio, kneeDiff: diff, kneeAngles: [aL, aR] };
+    }
+
+    // NEU: Hand-Achse (Handgelenke) relativ zu Schulterbreite
+    function colorForHandRatio(r) {
+      if (r <= 1.25) return "rgba(0,170,0,0.95)";
+      if (r <= 1.45) return "rgba(255,140,0,0.95)";
+      return "rgba(220,0,0,0.95)";
+    }
+
+    function drawHandAxis(raw, cssPoints) {
+      if (!toggleHandAxis.checked || !raw || !cssPoints) return { handRatio: null };
+
+      // Handgelenke: 15 (left), 16 (right). Fallback: 19/20 (index) wenn wrists fehlen.
+      const wL = cssPoints[15] || cssPoints[19];
+      const wR = cssPoints[16] || cssPoints[20];
+      const sL = cssPoints[11], sR = cssPoints[12];
+      if (!wL || !wR || !sL || !sR) return { handRatio: null };
+
+      const shoulderW = distPx(sL, sR);
+      const handW = distPx(wL, wR);
+      const handRatio = (shoulderW > 1) ? (handW / shoulderW) : null;
+
+      if (handRatio != null) {
+        ctx.save();
+        ctx.lineCap = "round";
+        ctx.lineWidth = 3;
+        ctx.setLineDash([7, 6]);
+        ctx.strokeStyle = colorForHandRatio(handRatio);
+        ctx.beginPath();
+        ctx.moveTo(wL._cx, wL._cy);
+        ctx.lineTo(wR._cx, wR._cy);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.restore();
+      }
+
+      return { handRatio };
     }
 
     // Timer logic
@@ -1062,7 +1105,16 @@
     let recorder=null, recordedChunks=[], lastBlob=null;
     let isRecording = false;
 
-    const recStats = { frames:0, kneeWide:0, kneeAsym:0, legsBent:0, headExt:0, headFlex:0, avgKneeRatioSum:0, avgKneeRatioN:0 };
+    // NEU: Hand-Stats ergänzt
+    const recStats = {
+      frames:0,
+      kneeWide:0, kneeAsym:0, legsBent:0,
+      headExt:0, headFlex:0,
+      avgKneeRatioSum:0, avgKneeRatioN:0,
+
+      handWide:0,
+      avgHandRatioSum:0, avgHandRatioN:0
+    };
     function resetRecStats() { for (const k of Object.keys(recStats)) recStats[k] = 0; }
 
     function clearTipsUI() {
@@ -1086,6 +1138,9 @@
       if (p(recStats.kneeAsym) >= thr) issues.push({ score:p(recStats.kneeAsym), title:"Beinschlag unsymmetrisch", tip:"Links/rechts ähnlich beugen/strecken – Symmetrie anstreben." });
       if (p(recStats.legsBent) >= thr) issues.push({ score:p(recStats.legsBent), title:"Beine nicht gestreckt in der Gleitphase", tip:"Nach dem Beinschlag vollständig strecken – kurz stabil gleiten." });
 
+      // NEU: Hände/Arme zu weit geöffnet
+      if (p(recStats.handWide) >= thr) issues.push({ score:p(recStats.handWide), title:"Arme/Hände zu weit geöffnet", tip:"In der Streck-/Gleitphase Hände nur leicht breiter als Schulterbreite halten (geringere Bremsfläche)." });
+
       if (p(recStats.headExt) >= thr) issues.push({ score:p(recStats.headExt), title:"Kopf überstreckt (HWS)", tip:"Nacken lang, Blick eher schräg nach unten/vorne (neutral)." });
       if (p(recStats.headFlex) >= thr) issues.push({ score:p(recStats.headFlex), title:"Kopf zu tief (HWS-Flexion)", tip:"Kopf neutral: Blick leicht nach vorn/unten, nicht „Kinn auf Brust“." });
 
@@ -1096,8 +1151,14 @@
       const top = issues.slice(0,3);
       if (top.length === 0) return;
 
-      const avgRatio = (recStats.avgKneeRatioN > 0) ? (recStats.avgKneeRatioSum / recStats.avgKneeRatioN) : null;
-      hintMeta.textContent = `${recStats.frames} Frames` + (avgRatio ? ` • Ø Knie/Schulter ${avgRatio.toFixed(2)}×` : "");
+      const avgKnee = (recStats.avgKneeRatioN > 0) ? (recStats.avgKneeRatioSum / recStats.avgKneeRatioN) : null;
+      const avgHand = (recStats.avgHandRatioN > 0) ? (recStats.avgHandRatioSum / recStats.avgHandRatioN) : null;
+
+      hintMeta.textContent =
+        `${recStats.frames} Frames` +
+        (avgKnee ? ` • Ø Knie/Schulter ${avgKnee.toFixed(2)}×` : "") +
+        (avgHand ? ` • Ø Hand/Schulter ${avgHand.toFixed(2)}×` : "");
+
       hintText.textContent = "In dieser Aufnahme waren folgende Punkte über mehrere Frames deutlich auffällig:";
 
       for (const it of top) {
@@ -1286,6 +1347,9 @@
           const neck = drawNeckAxis(raw, cssPoints, ts);
           const legs = drawLegChecks(raw, cssPoints);
 
+          // NEU: Handachse zeichnen
+          const hands = drawHandAxis(raw, cssPoints);
+
           updateTimer(raw, ts);
 
           if (isRecording) {
@@ -1297,6 +1361,13 @@
               if (legs.kneeRatio > 1.55) recStats.kneeWide++;
             }
             if (legs.kneeDiff != null && legs.kneeDiff > 25) recStats.kneeAsym++;
+
+            // NEU: Hand-Stats
+            if (hands.handRatio != null) {
+              recStats.avgHandRatioSum += hands.handRatio;
+              recStats.avgHandRatioN++;
+              if (hands.handRatio > 1.45) recStats.handWide++;
+            }
 
             const [aL, aR] = legs.kneeAngles || [null,null];
             const bent = ((aL != null && aL < 155) || (aR != null && aR < 155));
@@ -1312,7 +1383,11 @@
             ? `neck=${neck.neckDeg.toFixed(1)}° n=${(neck.neutral??0).toFixed(1)} d=${(neck.d??0).toFixed(1)} ${neck.state} prof=${neck.profile?1:0} face=${neck.facing}`
             : `neck=—`;
 
-          drawOverlay(`DEBUG: lm=${raw.length} mask=${hasMask?1:0} maskmax=${(maskInfo.max??0).toFixed(3)} score=${scoreEma.toFixed(2)} ${neckDbg} ui=${isPortraitUI()?"P":"L"}`);
+          const handDbg = (hands && hands.handRatio != null)
+            ? `hand/shoulder=${hands.handRatio.toFixed(2)}`
+            : `hand/shoulder=—`;
+
+          drawOverlay(`DEBUG: lm=${raw.length} mask=${hasMask?1:0} maskmax=${(maskInfo.max??0).toFixed(3)} score=${scoreEma.toFixed(2)} ${handDbg} ${neckDbg} ui=${isPortraitUI()?"P":"L"}`);
         } else {
           drawOverlay(`DEBUG: lm=0 mask=${hasMask?1:0} maskmax=${(maskInfo.max??0).toFixed(3)} ui=${isPortraitUI()?"P":"L"}`);
         }
