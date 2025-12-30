@@ -262,7 +262,7 @@
           <summary>Arme/Hände im Zug zu weit geöffnet („Oma-/Anfängerzug“)</summary>
           <p class="hint">
             <b>Faustregel:</b> Im Zug Hände nicht „riesig“ nach außen führen – Ellbogen eher höher/„außen“, Unterarme greifen Wasser.
-            Richtwert: Hand/Schulter <b>&gt; 1,60×</b> (deutlich zu weit).
+            Richtwert: Hand/Schulter <b>&gt; 1,70×</b> (deutlich zu weit).
           </p>
         </details>
         <details>
@@ -300,31 +300,35 @@
       <ul id="hintList"></ul>
     </div>
 
-    <!-- FEEDBACK (Formspree) – korrekt innerhalb der .stack -->
-    <div class="block" id="feedbackBlock">
-      <div class="blockTitle">Feedback / Bug melden</div>
-      <p class="hint" style="margin-top:-2px;">
-        Hier kannst du Probleme, Verbesserungsvorschläge oder Auffälligkeiten melden. Nachricht geht direkt an <span class="mono">motaxis.postfach@gmail.com</span>.
-      </p>
+    <!-- FEEDBACK standardmäßig zugeklappt -->
+    <details class="block" id="feedbackBlock" style="padding:10px 12px;">
+      <summary>Feedback / Bug melden</summary>
+      <div style="margin-top:10px;">
+        <p class="hint" style="margin-top:0;">
+          Nachricht geht direkt an <span class="mono">motaxis.postfach@gmail.com</span>.
+        </p>
 
-      <form id="feedbackForm" action="https://formspree.io/f/mzdbqzog" method="POST" class="fbGrid">
-        <label style="border:none; padding:0; background:transparent;">
-          <span class="hint" style="min-width:auto;">Deine E-Mail (optional)</span>
-        </label>
-        <input type="email" name="email" placeholder="name@mail.de (optional)" autocomplete="email" />
+        <form id="feedbackForm" action="https://formspree.io/f/mzdbqzog" method="POST" class="fbGrid">
+          <label style="border:none; padding:0; background:transparent;">
+            <span class="hint" style="min-width:auto;">Deine E-Mail (optional)</span>
+          </label>
+          <input type="email" name="email" placeholder="name@mail.de (optional)" autocomplete="email" />
 
-        <label style="border:none; padding:0; background:transparent;">
-          <span class="hint" style="min-width:auto;">Nachricht</span>
-        </label>
-        <textarea name="message" required placeholder="Was ist passiert? (Gerät/Browser, Aufnahmeposition, Schritte, erwartetes Verhalten, tatsächliches Verhalten)"></textarea>
+          <label style="border:none; padding:0; background:transparent;">
+            <span class="hint" style="min-width:auto;">Nachricht</span>
+          </label>
+          <textarea name="message" required placeholder="Was ist passiert? (Gerät/Browser, Aufnahmeposition, Schritte, erwartetes Verhalten, tatsächliches Verhalten)"></textarea>
 
-        <input type="hidden" name="page" value="MOTAXIS" />
-        <div class="fbRow">
-          <button id="btnSendFeedback" type="submit" class="primary">Senden</button>
-          <span id="feedbackStatus" class="hint" aria-live="polite"></span>
-        </div>
-      </form>
-    </div>
+          <input type="hidden" name="page" value="MOTAXIS" />
+
+          <div class="fbRow">
+            <!-- Button zeigt nur "Senden" -->
+            <button id="btnSendFeedback" type="submit" class="primary">Senden</button>
+            <span id="feedbackStatus" class="hint" aria-live="polite"></span>
+          </div>
+        </form>
+      </div>
+    </details>
   </div>
 
   <p class="hint mono" id="status">Status: bereit</p>
@@ -653,7 +657,6 @@
     function isProfileLikely(raw){
       const ls = raw[11], rs = raw[12];
       if(!ls || !rs) return false;
-      // Profil: Schultern "übereinander" (x fast gleich)
       return Math.abs(ls.x - rs.x) < 0.055;
     }
 
@@ -672,7 +675,7 @@
 
     // --- HWS state: NUR im Profil auswerten (frontal ignorieren)
     let neckAngleEma = null;
-    let neckState = "unknown"; // "green" | "redFlex" | "redExt" | "amber" | "unknown"
+    let neckState = "unknown";
     let neckSince = 0;
     let neckNeutralAuto = null;
     let neckCalibSamples = [];
@@ -706,9 +709,7 @@
       const profile = isProfileLikely(rawNorm);
       const facing  = estimateFacingSign(rawNorm, head, shoulder);
 
-      // Frontal: keine valide Flex/Ext-Auswertung -> nur Achse NICHT färben/keine Stats
       if (!profile) {
-        // optional: Achse zeichnen in neutralem Grau, damit man sieht "da ist was"
         const cssLs = cssPoints[11], cssRs = cssPoints[12];
         const cssShoulder = (cssLs && cssRs) ? { _cx:(cssLs._cx+cssRs._cx)/2, _cy:(cssLs._cy+cssRs._cy)/2 } : null;
         const cssHead = headCenterCss(cssPoints);
@@ -724,11 +725,9 @@
           ctx.stroke();
           ctx.restore();
         }
-
         return { neckDeg: null, state: "unknown", neutral: null, d: null, profile:false, facing, valid:false };
       }
 
-      // Profilmodus: compare neck vector to vertical "up"
       const neckV = normVec({ x: head.x - shoulder.x, y: head.y - shoulder.y });
       const up = { x: 0, y: -1 };
       let ang = signedAngleDeg(up, neckV);
@@ -836,18 +835,18 @@
         ctx.restore();
       }
 
-      // Asymmetrie bei side45/back45: nur eingeschränkt sinnvoll
       const validAsym = (filmingPreset.value === "stand");
       return { kneeRatio, kneeDiff: diff, kneeAngles: [aL, aR], validAsym };
     }
 
-    // Hand axis thresholds angepasst:
-    // Grün: <= 1.40 (leicht breiter als Schulterbreite)
-    // Orange: <= 1.60
-    // Rot:    >  1.60
+    // Hand axis thresholds (später rot):
+    // Grün: <= 1.55
+    // Orange: <= 1.75
+    // Rot: > 1.75
+    // Tip-Trigger: > 1.75
     function colorForHandRatio(r) {
-      if (r <= 1.40) return "rgba(0,170,0,0.95)";
-      if (r <= 1.60) return "rgba(255,140,0,0.95)";
+      if (r <= 1.55) return "rgba(0,170,0,0.95)";
+      if (r <= 1.75) return "rgba(255,140,0,0.95)";
       return "rgba(220,0,0,0.95)";
     }
 
@@ -982,7 +981,6 @@
         return;
       }
 
-      // Timer nur sinnvoll, wenn Recording aktiv (deine Vorgabe)
       if(!isRecording){
         glideActive=false; currentElapsed=0;
         scoreEma=0; scoreStableSince=null; scoreLowSince=null;
@@ -1005,7 +1003,6 @@
       const aL = kneeAngle(lh, lk, la);
       const aR = kneeAngle(rh, rk, ra);
 
-      // side45: Knie-Bend-Stop ist zu aggressiv -> nur als schwaches Stop-Signal
       const kneesBend = ((aL != null && aL < (p==="side45" ? 152 : 158)) || (aR != null && aR < (p==="side45" ? 152 : 158)));
       const armScore = armOverHeadRobust(raw);
       const armsDropped = armScore < (p==="side45" ? 0.44 : 0.48);
@@ -1101,7 +1098,7 @@
       ctx.shadowBlur=0;
 
       ctx.font = isPortrait ? "700 28px system-ui" : "700 24px system-ui";
-      ctx.fillText(glideActive ? fmt(currentElapsed) : "0.000 s", x+12, y+(isPortrait?36:30));
+      ctx.fillText(glideActive ? (currentElapsed/1000).toFixed(3) + " s" : "0.000 s", x+12, y+(isPortrait?36:30));
 
       ctx.font="600 12px system-ui";
       const presetLabel = filmingPreset.value==="stand" ? "Stand" : (filmingPreset.value==="side45" ? "45° seitlich" : "45° hinten");
@@ -1111,14 +1108,14 @@
       if (isPortrait) {
         const baseY = y + 80;
         for (let i=0;i<4;i++){
-          const t = glideTimes[i]!=null ? fmt(glideTimes[i]) : "—";
+          const t = glideTimes[i]!=null ? (glideTimes[i]/1000).toFixed(3) + " s" : "—";
           ctx.fillText(`Slot ${i+1}: ${t}`, x+12, baseY + i*16);
         }
       } else {
         const lineY = y + 72;
         const parts = [];
         for (let i=0;i<4;i++){
-          const t = glideTimes[i]!=null ? fmt(glideTimes[i]) : "—";
+          const t = glideTimes[i]!=null ? (glideTimes[i]/1000).toFixed(3) + " s" : "—";
           parts.push(`S${i+1}: ${t}`);
         }
         let cx = x + 12;
@@ -1156,20 +1153,6 @@
       ctx.restore();
     }
 
-    if (!CanvasRenderingContext2D.prototype.roundRect) {
-      CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
-        const rr = Math.min(r, w/2, h/2);
-        this.beginPath();
-        this.moveTo(x+rr, y);
-        this.arcTo(x+w, y, x+w, y+h, rr);
-        this.arcTo(x+w, y+h, x, y+h, rr);
-        this.arcTo(x, y+h, x, y, rr);
-        this.arcTo(x, y, x+w, y, rr);
-        this.closePath();
-        return this;
-      };
-    }
-
     // Recording + tips
     let recorder=null, recordedChunks=[], lastBlob=null;
     let isRecording = false;
@@ -1204,21 +1187,19 @@
 
       if (p(recStats.kneeWide) >= thr) issues.push({ score:p(recStats.kneeWide), title:"Knie öffnen zu weit", tip:"Knie enger (≈ schulterbreit) anziehen – „Schere“ vermeiden." });
 
-      // Asymmetrie nur, wenn stand (Front/Back/Side verzerrt das sehr schnell)
       if (filmingPreset.value === "stand" && p(recStats.kneeAsym) >= thr) {
         issues.push({ score:p(recStats.kneeAsym), title:"Beinschlag unsymmetrisch", tip:"Links/rechts ähnlich beugen/strecken – Symmetrie anstreben." });
       }
 
       if (p(recStats.legsBent) >= thr) issues.push({ score:p(recStats.legsBent), title:"Beine nicht gestreckt in der Gleitphase", tip:"Nach dem Beinschlag vollständig strecken – kurz stabil gleiten." });
 
-      // Hände: Rot erst >1.60×, Orange 1.40–1.60. Das ist „zu weit“ im Zug-Kontext.
+      // Trigger später: erst > 1.75×
       if (p(recStats.handWide) >= thr) issues.push({
         score:p(recStats.handWide),
         title:"Arme/Hände im Zug zu weit geöffnet",
         tip:"Beim Zug Ellbogen eher „hoch/außen“, Unterarme greifen Wasser; Hände nicht weit nach außen ziehen (Bremsfläche)."
       });
 
-      // HWS: Nur wenn Profil valide war (wir zählen nur dann)
       if (p(recStats.headExt) >= thr) issues.push({ score:p(recStats.headExt), title:"Kopf überstreckt (HWS)", tip:"Nacken lang, Blick eher schräg nach unten/vorne (neutral)." });
       if (p(recStats.headFlex) >= thr) issues.push({ score:p(recStats.headFlex), title:"Kopf zu tief (HWS-Flexion)", tip:"Kopf neutral: Blick leicht nach vorn/unten, nicht „Kinn auf Brust“." });
 
@@ -1262,7 +1243,6 @@
     }
 
     function startRecordingCanvas(){
-      // Auto-reset deiner Vorgabe
       resetTimerSlots();
       resetNeckState();
       recordedChunks=[]; lastBlob=null; btnShare.disabled=true;
@@ -1440,20 +1420,18 @@
               if (legs.kneeRatio > 1.55) recStats.kneeWide++;
             }
 
-            // Asym nur in stand
             if (legs.validAsym && legs.kneeDiff != null && legs.kneeDiff > 25) recStats.kneeAsym++;
 
             if (hands.handRatio != null) {
               recStats.avgHandRatioSum += hands.handRatio;
               recStats.avgHandRatioN++;
-              if (hands.handRatio > 1.60) recStats.handWide++;   // <-- Schwelle erhöht (rot erst > 1.60)
+              if (hands.handRatio > 1.75) recStats.handWide++; // später triggern
             }
 
             const [aL, aR] = legs.kneeAngles || [null,null];
             const bent = ((aL != null && aL < 155) || (aR != null && aR < 155));
             if (toggleTimer.checked && glideActive && bent) recStats.legsBent++;
 
-            // HWS nur zählen, wenn valide (Profil)
             if (toggleTimer.checked && glideActive && neck?.valid && neck?.state) {
               if (neck.state === "redExt") recStats.headExt++;
               if (neck.state === "redFlex") recStats.headFlex++;
@@ -1461,14 +1439,14 @@
           }
 
           const neckDbg = (neck && neck.neckDeg != null)
-            ? `neck=${neck.neckDeg.toFixed(1)}° n=${(neck.neutral??0).toFixed(1)} d=${(neck.d??0).toFixed(1)} ${neck.state} prof=${neck.profile?1:0}`
+            ? `neck=${neck.neckDeg.toFixed(1)}° d=${(neck.d??0).toFixed(1)} ${neck.state} prof=${neck.profile?1:0}`
             : `neck=—`;
 
           const handDbg = (hands && hands.handRatio != null)
             ? `hand/shoulder=${hands.handRatio.toFixed(2)}`
             : `hand/shoulder=—`;
 
-          drawOverlay(`DEBUG: lm=${raw.length} mask=${hasMask?1:0} maskmax=${(maskInfo.max??0).toFixed(3)} score=${scoreEma.toFixed(2)} ${handDbg} ${neckDbg} rec=${isRecording?1:0} ui=${isPortraitUI()?"P":"L"}`);
+          drawOverlay(`DEBUG: lm=${raw.length} mask=${hasMask?1:0} maskmax=${(maskInfo.max??0).toFixed(3)} ${handDbg} ${neckDbg} rec=${isRecording?1:0} ui=${isPortraitUI()?"P":"L"}`);
         } else {
           drawOverlay(`DEBUG: lm=0 mask=${hasMask?1:0} maskmax=${(maskInfo.max??0).toFixed(3)} rec=${isRecording?1:0} ui=${isPortraitUI()?"P":"L"}`);
         }
