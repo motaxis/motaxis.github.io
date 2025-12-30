@@ -627,6 +627,15 @@
       return angleBetween(u, v);
     }
 
+    /* ✅ FIX: elbowAngle wird in updateTimer() genutzt, war aber nicht definiert.
+       Minimaler Patch: gleiche Logik wie kneeAngle, nur für Schulter–Ellenbogen–Handgelenk. */
+    function elbowAngle(shoulder, elbow, wrist) {
+      if (!shoulder || !elbow || !wrist) return null;
+      const u = { x: shoulder.x - elbow.x, y: shoulder.y - elbow.y };
+      const v = { x: wrist.x - elbow.x, y: wrist.y - elbow.y };
+      return angleBetween(u, v);
+    }
+
     function mapLandmarksContain(rawLandmarks, vw, vh, cw, ch) {
       const scale = Math.min(cw / vw, ch / vh);
       const dispW = vw * scale;
@@ -1336,7 +1345,7 @@
       ctx.beginPath();
       if (ctx.roundRect) ctx.roundRect(x, y, w, h, 8);
       else {
-        ctx.moveTo(x+8,y); ctx.arcTo(x+w,y,x+w,y+h,8); ctx.arcTo(x+w,y+h,x,y+h,8); ctx.arcTo(x,y+h,x,y,8); ctx.arcTo(x,y,x+w,y,8); ctx.closePath();
+        ctx.moveTo(x+8,y); ctx.arcTo(x+w,y,x+w,y+h,8); ctx.arcTo(x+w,y+h,x,y+h,8); ctx.arcTo(x,y+h,x,y,8); ctx.arcTo(x,y+h,x,y,8); ctx.arcTo(x,y,x+w,y,8); ctx.closePath();
       }
       ctx.fill(); ctx.stroke();
       ctx.fillStyle = "rgba(255,255,255,0.95)";
