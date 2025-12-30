@@ -7,51 +7,126 @@
   <style>
     :root { --bg: #bfe7ff; }
 
-    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 16px; }
+    /* Typografie / Look etwas hochwertiger */
+    body {
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      margin: 16px;
+      color: #111;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
     .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
-    .hint { color: #555; font-size: 14px; line-height: 1.4; max-width: 1100px; }
+    .hint { color: #4b5563; font-size: 14px; line-height: 1.5; max-width: 1100px; }
 
     .header {
-      background: var(--bg);
+      background: linear-gradient(180deg, rgba(191,231,255,1) 0%, rgba(240,250,255,1) 100%);
       border: 1px solid #d6ecff;
-      border-radius: 14px;
-      padding: 12px 14px;
+      border-radius: 16px;
+      padding: 14px 16px;
       margin-bottom: 12px;
+      box-shadow: 0 10px 26px rgba(0,0,0,0.06);
     }
-    .header h1 { margin: 0; font-size: 20px; }
-    .header p { margin: 6px 0 0 0; color: #1f2a33; font-size: 13.5px; line-height: 1.35; max-width: 980px; }
+    .header h1 {
+      margin: 0;
+      font-size: 26px;
+      letter-spacing: 0.3px;
+      font-weight: 900;
+      color: #0b1b26;
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+    }
+    .brand {
+      font-weight: 950;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+    }
+    .tagline {
+      font-size: 12.5px;
+      font-weight: 700;
+      color: rgba(11,27,38,0.72);
+      padding: 3px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(11,27,38,0.18);
+      background: rgba(255,255,255,0.55);
+    }
+    .header p {
+      margin: 8px 0 0 0;
+      color: #1f2a33;
+      font-size: 13.8px;
+      line-height: 1.45;
+      max-width: 980px;
+      text-align: justify;          /* Blocksatz */
+      text-justify: inter-word;
+    }
 
     .stack { display: grid; grid-template-columns: 1fr; gap: 12px; max-width: 1100px; }
 
     .block {
-      border: 1px solid #ddd;
-      border-radius: 12px;
-      padding: 10px 12px;
+      border: 1px solid #e5e7eb;
+      border-radius: 14px;
+      padding: 12px 14px;
       background: #fff;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.04);
     }
     .blockTitle {
-      font-weight: 800;
+      font-weight: 850;
       margin: 0 0 10px 0;
-      font-size: 13px;
-      color: #222;
-      letter-spacing: 0.2px;
+      font-size: 12.5px;
+      color: #111827;
+      letter-spacing: 0.35px;
+      text-transform: uppercase;
     }
 
-    details { border: 1px solid #ddd; border-radius: 12px; padding: 10px 12px; background: #fff; }
-    summary { cursor: pointer; font-weight: 800; }
+    details {
+      border: 1px solid #e5e7eb;
+      border-radius: 14px;
+      padding: 12px 14px;
+      background: #fff;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.04);
+    }
+    summary {
+      cursor: pointer;
+      font-weight: 850;
+      color: #111827;
+      list-style: none;
+      outline: none;
+    }
+    summary::-webkit-details-marker { display:none; }
+    summary::before{
+      content:"▸";
+      display:inline-block;
+      margin-right: 8px;
+      transform: translateY(-1px);
+      color: rgba(17,24,39,0.65);
+    }
+    details[open] > summary::before{
+      content:"▾";
+      color: rgba(17,24,39,0.85);
+    }
 
-    label { display: inline-flex; align-items: center; gap: 8px; padding: 8px 10px; border: 1px solid #ddd; border-radius: 10px; background:#fff; }
-    select { padding: 9px 12px; border-radius: 10px; border: 1px solid #ccc; background: #fff; }
+    label { display: inline-flex; align-items: center; gap: 8px; padding: 8px 10px; border: 1px solid #e5e7eb; border-radius: 12px; background:#fff; }
+    select { padding: 9px 12px; border-radius: 12px; border: 1px solid #d1d5db; background: #fff; }
 
-    button { padding: 10px 14px; border-radius: 10px; border: 1px solid #ccc; background: #fff; }
-    button.primary { border-color: #111; }
+    button {
+      padding: 10px 14px;
+      border-radius: 12px;
+      border: 1px solid #d1d5db;
+      background: #fff;
+      font-weight: 650;
+      letter-spacing: 0.1px;
+    }
+    button.primary {
+      border-color: #0b1b26;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+    }
     button:disabled { opacity: 0.5; }
 
     .btnRow { display:flex; gap:10px; flex-wrap: wrap; }
     .btnRow button { flex: 1 1 auto; }
     .btnRow .wide { flex: 1 1 100%; }
 
-    video, canvas { max-width: 100%; border: 1px solid #ddd; border-radius: 10px; }
+    video, canvas { max-width: 100%; border: 1px solid #e5e7eb; border-radius: 12px; }
     video { width: 360px; height: auto; background:#000; }
     canvas { width: 360px; height: auto; background: var(--bg); }
 
@@ -65,9 +140,9 @@
       pointer-events: none !important;
     }
 
-    .rangeWrap { display:flex; align-items:center; gap:10px; padding: 8px 10px; border:1px solid #ddd; border-radius: 10px; margin-top: 10px; flex-wrap: wrap; background:#fff; }
-    .rangeWrap span { min-width: 170px; font-size: 13px; color:#666; }
-    .small { font-size: 13px; color:#666; min-width: 64px; text-align:right; }
+    .rangeWrap { display:flex; align-items:center; gap:10px; padding: 10px 12px; border:1px solid #e5e7eb; border-radius: 12px; margin-top: 10px; flex-wrap: wrap; background:#fff; }
+    .rangeWrap span { min-width: 170px; font-size: 13px; color:#4b5563; }
+    .small { font-size: 13px; color:#4b5563; min-width: 64px; text-align:right; }
 
     /* Techniktipps-Box: farbiger Akzent + grüne Umrandung */
     .tipsBox {
@@ -78,7 +153,7 @@
       background: linear-gradient(180deg, rgba(230,255,235,0.85), rgba(250,250,250,1));
       display: none;
       max-width: 1100px;
-      box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+      box-shadow: 0 10px 26px rgba(0,0,0,0.06);
     }
     .tipsBox h3 { margin: 0 0 6px 0; font-size: 14px; }
     .tipsBox ul { margin: 6px 0 0 18px; padding: 0; }
@@ -99,14 +174,14 @@
     .fbRow input, .fbRow textarea {
       width: 100%;
       padding: 10px 12px;
-      border-radius: 10px;
-      border: 1px solid #ccc;
+      border-radius: 12px;
+      border: 1px solid #d1d5db;
       font: inherit;
       background: #fff;
       box-sizing: border-box;
     }
     .fbRow textarea { min-height: 120px; resize: vertical; }
-    .fbFine { font-size: 12.5px; color:#666; line-height:1.35; }
+    .fbFine { font-size: 12.5px; color:#4b5563; line-height:1.35; }
     .fbStatus { font-size: 13px; color:#333; margin-top: 6px; display:none; }
     .fbStatus.ok { color: #0b6b0b; }
     .fbStatus.err { color: #a10000; }
@@ -117,10 +192,10 @@
 
 <body>
   <div class="header">
-    <h1>MOTAXIS - Anonyme Bewegungsanalyse</h1>
+    <h1><span class="brand">MOTAXIS</span> <span class="tagline">Anonyme Bewegungsanalyse</span></h1>
     <p>
-      Beta-Version zur anonymen Aufnahme und Analyse von Skelettachsen und Bewegungen (Pose-Landmarks).<br>
-      Bislang optimiert für Brustschwimmen - Auswertungen sind experimentell und können je nach Aufnahmebedingungen variieren.
+      Beta-Version zur anonymen Aufnahme und Analyse von Skelettachsen und Bewegungen (Pose-Landmarks).
+      Bislang optimiert für Brustschwimmen – Auswertungen sind experimentell und können je nach Aufnahmebedingungen variieren.
     </p>
   </div>
 
@@ -135,7 +210,8 @@
       </div>
     </div>
 
-    <details id="displayBox">
+    <!-- Anzeige (allgemein) standardmäßig AUF -->
+    <details id="displayBox" open>
       <summary>Anzeige (allgemein)</summary>
       <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap;">
         <label><input type="checkbox" id="toggleSkeleton" checked /> Skelett</label>
@@ -148,6 +224,7 @@
         </select>
       </div>
 
+      <!-- Erweiterte Einstellungen standardmäßig ZU (kein open) -->
       <details id="advancedBox" style="margin-top:10px;">
         <summary>Erweiterte Einstellungen</summary>
 
@@ -327,7 +404,6 @@
           <textarea name="message" placeholder="Was ist passiert? (Gerät/Browser, Aufnahmewinkel, Schritte zum Reproduzieren, ggf. Screenshot-Beschreibung)"></textarea>
         </div>
 
-        <!-- Ein paar nützliche Kontextfelder (automatisch befüllt) -->
         <input type="hidden" name="app" value="MOTAXIS" />
         <input type="hidden" name="version" value="2025-12-30" />
         <input type="hidden" id="fbMeta" name="meta" value="" />
@@ -671,7 +747,7 @@
       return null;
     }
 
-    // Profil-Erkennung: toleranter, damit "seitlich genug" öfter erkannt wird
+    // Profil-Erkennung: toleranter
     function isProfileLikely(raw){
       const ls = raw[11], rs = raw[12];
       if(!ls || !rs) return false;
@@ -734,7 +810,6 @@
 
       const profile = isProfileLikely(rawNorm);
 
-      // default: neutral stroke when not profile
       let stroke = "rgba(0,0,0,0.55)";
       let neckDeg = null, neutral = null, d = null, facing = 1;
 
@@ -756,7 +831,6 @@
         const neutralManual = Number(neckNeutral.value);
         neutral = (neckNeutralAuto != null) ? neckNeutralAuto : neutralManual;
 
-        // Auto-neutral in Stand
         if (filmingPreset.value === "stand") {
           const d0 = neckAngleEma - neutralManual;
           if (Math.abs(d0) < 22 && neckCalibSamples.length < 45) {
@@ -770,7 +844,6 @@
           if (neckNeutralAuto != null) neutral = neckNeutralAuto;
         }
 
-        // Less aggressive thresholds for side/back presets
         const preset = filmingPreset.value;
         const tolBoost = (preset === "side45" || preset === "back45") ? 1.15 : 1.0;
 
@@ -802,7 +875,6 @@
         if (neckState === "redFlex" || neckState === "redExt") stroke = "rgba(220,0,0,0.95)";
       }
 
-      // Draw ALWAYS
       ctx.save();
       ctx.lineCap = "round";
       ctx.lineWidth = 6;
@@ -830,12 +902,8 @@
       const sL = cssPoints[11], sR = cssPoints[12];
       if (!kL || !kR || !sL || !sR) return { kneeRatio: null, kneeDiff: null, kneeAngles: [null,null] };
 
-      // Visibility gate: avoid "unsym" tips when legs are not really visible
       const visOk = (p)=> (typeof p.visibility !== "number") ? true : (p.visibility >= 0.35);
-      if (!visOk(kL) || !visOk(kR)) {
-        // still draw nothing; return nulls to avoid false stats
-        return { kneeRatio: null, kneeDiff: null, kneeAngles: [null,null] };
-      }
+      if (!visOk(kL) || !visOk(kR)) return { kneeRatio: null, kneeDiff: null, kneeAngles: [null,null] };
 
       const shoulderW = distPx(sL, sR);
       const kneeW = distPx(kL, kR);
@@ -843,7 +911,6 @@
 
       const lh = raw[23], rh = raw[24], lk = raw[25], rk = raw[26], la = raw[27], ra = raw[28];
 
-      // Raw visibility gate for angles too (avoid nonsense angles when occluded)
       const rawVisOk = (p)=> (typeof p.visibility !== "number") ? true : (p.visibility >= 0.35);
       const aL = (rawVisOk(raw[23]) && rawVisOk(raw[25]) && rawVisOk(raw[27])) ? kneeAngle(lh, lk, la) : null;
       const aR = (rawVisOk(raw[24]) && rawVisOk(raw[26]) && rawVisOk(raw[28])) ? kneeAngle(rh, rk, ra) : null;
@@ -867,8 +934,7 @@
       return { kneeRatio, kneeDiff: diff, kneeAngles: [aL, aR] };
     }
 
-    // Hand axis thresholds:
-    // Grün <= 2.10, Orange <= 2.50, Rot > 2.50
+    // Hand axis thresholds
     function colorForHandRatio(r) {
       if (r <= 2.10) return "rgba(0,170,0,0.95)";
       if (r <= 2.50) return "rgba(255,140,0,0.95)";
@@ -882,7 +948,6 @@
     const glideTimes = [];
     const fmt = (ms)=> (ms/1000).toFixed(3) + " s";
 
-    // Arms up score WITHOUT head center (more robust)
     function armsUpScore(raw) {
       const ls = raw[11], rs = raw[12];
       const le = raw[13], re = raw[14];
@@ -1053,7 +1118,6 @@
 
     // Hand-axis drawing + measurement (GATED: only when NOT glideActive)
     function drawHandAxis(raw, cssPoints) {
-      // Only evaluate/draw outside glide phase (i.e., during arm pull)
       if (toggleTimer.checked && glideActive) return { handRatio: null, gated: true };
 
       if (!toggleHandAxis.checked || !raw || !cssPoints) return { handRatio: null, gated: false };
@@ -1063,7 +1127,6 @@
       const sL = cssPoints[11], sR = cssPoints[12];
       if (!wL || !wR || !sL || !sR) return { handRatio: null, gated: false };
 
-      // Visibility gate (avoid false wide when wrists are poorly tracked)
       const visOk = (p)=> (typeof p.visibility !== "number") ? true : (p.visibility >= 0.35);
       if (!visOk(wL) || !visOk(wR) || !visOk(sL) || !visOk(sR)) return { handRatio: null, gated: false };
 
@@ -1117,12 +1180,11 @@
       ctx.fill(); ctx.stroke();
 
       ctx.fillStyle="white";
-      ctx.shadowBlur=0;
 
-      ctx.font = isPortrait ? "700 28px system-ui" : "700 24px system-ui";
+      ctx.font = isPortrait ? "800 28px system-ui" : "800 24px system-ui";
       ctx.fillText(glideActive ? fmt(currentElapsed) : "0.000 s", x+12, y+(isPortrait?36:30));
 
-      ctx.font="600 12px system-ui";
+      ctx.font="700 12px system-ui";
       const presetLabel = filmingPreset.value==="stand" ? "Stand" : (filmingPreset.value==="side45" ? "45° seitlich" : "45° hinten");
       ctx.fillText(`Timer Brust – Gleitphase | Aufnahme: ${presetLabel}`, x+12, y+(isPortrait?56:48));
 
@@ -1193,18 +1255,15 @@
     let recorder=null, recordedChunks=[], lastBlob=null;
     let isRecording = false;
 
-    // Hand detection (only during arm pull phase i.e. outside glideActive)
     let handWideStreak = 0;
-    const HAND_RED_THR = 2.50;       // align with red threshold (> 2.50)
-    const HAND_STREAK_FRAMES = 8;    // consecutive frames required
+    const HAND_RED_THR = 2.50;
+    const HAND_STREAK_FRAMES = 8;
 
     const recStats = {
       frames:0,
       kneeWide:0, kneeAsym:0, legsBent:0,
       headExt:0, headFlex:0,
       avgKneeRatioSum:0, avgKneeRatioN:0,
-
-      // Only count hand metrics during arm-pull (non-glide)
       armPullFrames: 0,
       handWideFrames: 0
     };
@@ -1233,7 +1292,6 @@
 
       if (p(recStats.kneeWide) >= thr) issues.push({ score:p(recStats.kneeWide), title:"Knie öffnen zu weit", tip:"Knie enger (≈ schulterbreit) anziehen – „Schere“ vermeiden." });
 
-      // Unsymmetry only if legs were reliably visible often enough (avoid false tip when out of frame)
       if (filmingPreset.value !== "side45") {
         const asymShare = p(recStats.kneeAsym);
         if (asymShare >= thr) issues.push({ score:asymShare, title:"Beinschlag unsymmetrisch", tip:"Links/rechts ähnlich beugen/strecken – Symmetrie anstreben." });
@@ -1241,7 +1299,6 @@
 
       if (p(recStats.legsBent) >= thr) issues.push({ score:p(recStats.legsBent), title:"Beine nicht gestreckt in der Gleitphase", tip:"Nach dem Beinschlag vollständig strecken – kurz stabil gleiten." });
 
-      // Hand issue only based on arm-pull window
       const armPullDen = Math.max(1, recStats.armPullFrames);
       const handWideShare = recStats.handWideFrames / armPullDen;
       if (handWideShare >= 0.18) issues.push({
@@ -1250,7 +1307,6 @@
         tip:"Im Armzug nicht extrem nach außen aufmachen: Ellbogen eher „hoch“ halten und moderat öffnen."
       });
 
-      // Head tips only when profile-evaluable frames were present (counted below)
       if (p(recStats.headExt) >= thr) issues.push({ score:p(recStats.headExt), title:"Kopf überstreckt (HWS)", tip:"Nacken lang, Blick eher schräg nach unten/vorne (neutral)." });
       if (p(recStats.headFlex) >= thr) issues.push({ score:p(recStats.headFlex), title:"Kopf zu tief (HWS-Flexion)", tip:"Kopf neutral: Blick leicht nach vorn/unten, nicht „Kinn auf Brust“." });
 
@@ -1457,7 +1513,6 @@
           const neck = drawNeckAxis(raw, cssPoints, ts);
           const legs = drawLegChecks(raw, cssPoints);
 
-          // Update timer BEFORE hands (so glideActive is current for gating)
           updateTimer(raw, ts, isRecording);
 
           const hands = drawHandAxis(raw, cssPoints);
@@ -1465,43 +1520,32 @@
           if (isRecording) {
             recStats.frames++;
 
-            // knee ratio only if valid
             if (legs.kneeRatio != null) {
               recStats.avgKneeRatioSum += legs.kneeRatio;
               recStats.avgKneeRatioN++;
               if (legs.kneeRatio > 1.55) recStats.kneeWide++;
             }
 
-            // knee asymmetry only if diff valid (and not side45)
             if (filmingPreset.value !== "side45") {
               if (legs.kneeDiff != null && legs.kneeDiff > 25) recStats.kneeAsym++;
             }
 
-            // legs bent in glide phase only if angles valid
             const [aL, aR] = legs.kneeAngles || [null,null];
             const bent = ((aL != null && aL < 155) || (aR != null && aR < 155));
             if (toggleTimer.checked && glideActive && bent) recStats.legsBent++;
 
-            // Head: count only when profile-evaluable
             if (toggleTimer.checked && glideActive && neck?.profile && neck?.state) {
               if (neck.state === "redExt") recStats.headExt++;
               if (neck.state === "redFlex") recStats.headFlex++;
             }
 
-            // Hand-width detection ONLY outside glide phase (arm pull)
             if (!glideActive && hands.handRatio != null) {
               recStats.armPullFrames++;
 
-              if (hands.handRatio > HAND_RED_THR) {
-                handWideStreak++;
-              } else {
-                handWideStreak = 0;
-              }
+              if (hands.handRatio > HAND_RED_THR) handWideStreak++;
+              else handWideStreak = 0;
 
-              // count only if it persists across multiple consecutive frames
-              if (handWideStreak >= HAND_STREAK_FRAMES) {
-                recStats.handWideFrames++;
-              }
+              if (handWideStreak >= HAND_STREAK_FRAMES) recStats.handWideFrames++;
             }
           }
 
