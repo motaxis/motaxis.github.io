@@ -1102,93 +1102,125 @@
     }
 
     function updateTimer(raw, now, isRecording){
-      if(!toggleTimer.checked){ resetTimerState(false); return; }
-      if(!isRecording){ resetTimerState(false); return; }
+  if(!toggleTimer.checked){ resetTimerState(false); return; }
+  if(!isRecording){ resetTimerState(false); return; }
 
-      const p = filmingPreset.value;
+  const p = filmingPreset.value;
 
-      // Side45: leichter startbar, geduldiger stoppen
-      const startThr = (p === "side45") ? 0.60 : 0.68;
-      const stopThr  = (p === "side45") ? 0.46 : 0.56;
+  // Start/Stop-Schwellen (side45 toleranter starten, aber aggressiver stoppen)
+  const startThr = (p === "side45") ? 0.62 : 0.68;
+  const stopThr  = (p === "side45") ? 0.54 : 0.56;   // <- höher = stoppt leichter
 
-      const startHoldMs = (p === "side45") ? 100 : 120;
-      const stopHoldMs  = (p === "side45") ? 300 : 230;
-      const hardMaxMs = (p === "stand") ? 5000 : 6500;
+  const startHoldMs = (p === "side45") ? 90 : 120;
+  const stopHoldMs  = (p === "side45") ? 140 : 230;  // <- kürzer = stoppt schneller
 
-      const alpha = 0.50;
-      const sNow = computeGlideScore(raw);
-      if (scoreEma === 0) scoreEma = sNow;
-      else scoreEma = alpha*scoreEma + (1-alpha)*sNow;
+  const hardMaxMs = (p === "stand") ? 5000 : 6500;
 
-      const lh = raw[23], rh = raw[24], lk = raw[25], rk = raw[26], la = raw[27], ra = raw[28];
-      const aL = kneeAngle(lh, lk, la);
-      const aR = kneeAngle(rh, rk, ra);
+  // EMA (etwas direkter reagieren)
+  const alpha = (p === "side45") ? 0.42 : 0.50;
 
-      const kneeStopThr = (p === "side45") ? 148 : 156;
-      const kneesBend = ((aL != null && aL < kneeStopThr) || (aR != null && aR < kneeStopThr));
+  const sNow = computeGlideScore(raw);
+  if (scoreEma === 0) scoreEma = sNow;
+  else scoreEma = alpha*scoreEma + (1-alpha)*sNow;
 
-      // Arms dropped via streamline score
-      const armS = armsStreamlineScore(raw);
-      const armsDropped = armS < ((p === "side45") ? 0.30 : 0.42);
+  // --- Bewegungsdetektoren (STOP-Signale) ---
+  const ls = raw[11], rs = raw[12];
+  const le = raw[13], re = raw[14];
+  const lw = raw[15], rw = raw[16];
 
-      // Key: side45 movementStop OFF (wie in der stabileren älteren Logik)
-      const movementStop = (p === "side45") ? false : (kneesBend || armsDropped);
+  // Knie (wie vorher)
+  const lh = raw[23], rh = raw[24], lk = raw[25], rk = raw[26], la = raw[27], ra = raw[28];
+  const aKL = kneeAngle(lh, lk, la);
+  const aKR = kneeAngle(rh, rk, ra);
 
-      if(!glideActive){
-        currentElapsed = 0;
-        if(scoreEma >= startThr){
-          if(scoreStableSince == null) scoreStableSince = now;
-          if(now - scoreStableSince >= startHoldMs){
-            glideActive = true;
-            glideStart = now;
-            scoreLowSince = null;
-            scoreStableSince = null;
-          }
-        } else {
-          scoreStableSince = null;
-        }
-        return;
-      }
+  const kneeStopThr = (p === "side45") ? 148 : 156;
+  const kneesBend = ((aKL != null && aKL < kneeStopThr) || (aKR != null && aKR < kneeStopThr));
 
-      currentElapsed = now - glideStart;
+  // Armzug-Erkennung: Ellbogenwinkel sinkt ODER Wrist fällt ab (ein Arm reicht)
+  let armPull = false;
+  if (ls && le && lw) {
+    const eA = elbowAngle(ls, le, lw); // 180=gestreckt
+    if (eA != null && eA < 158) armPull = true;      // <- relativ “aggressiv”
+  }
+  if (rs && re && rw) {
+    const eA = elbowAngle(rs, re, rw);
+    if (eA != null && eA < 158) armPull = true;
+  }
 
-      if(currentElapsed >= hardMaxMs){
-        glideActive = false;
+  // Wrist-Drop: Handgelenk deutlich unter Schulterlinie -> keine Streamline mehr
+  if (!armPull && (ls || rs) && (lw || rw)) {
+    const shoulderY = ((ls?.y ?? rs.y) + (rs?.y ?? ls.y)) / 2;
+    const drop = 0.035; // aggressiver (kleiner = schneller stop)
+    const leftDrop  = lw ? (lw.y > shoulderY + drop) : false;
+    const rightDrop = rw ? (rw.y > shoulderY + drop) : false;
+    if (leftDrop || rightDrop) armPull = true;
+  }
+
+  // Bei side45: Knie + Armzug sind gute Stop-Signale
+  const movementStop = (p === "side45") ? (kneesBend || armPull) : (kneesBend || armPull);
+
+  // --- START ---
+  if(!glideActive){
+    currentElapsed = 0;
+
+    if(scoreEma >= startThr && glideTimes.length < 4){
+      if(scoreStableSince == null) scoreStableSince = now;
+      if(now - scoreStableSince >= startHoldMs){
+        glideActive = true;
+        glideStart = now;
+        scoreLowSince = null;
         scoreStableSince = null;
-        scoreLowSince = null;
-        if(glideTimes.length < 4) glideTimes.push(currentElapsed);
-        currentElapsed = 0;
-        return;
       }
-
-      if(movementStop){
-        if(scoreLowSince == null) scoreLowSince = now;
-        const moveStopHold = 110;
-        if(now - scoreLowSince >= moveStopHold){
-          glideActive = false;
-          scoreStableSince = null;
-          scoreLowSince = null;
-          if(glideTimes.length < 4) glideTimes.push(now - glideStart);
-          currentElapsed = 0;
-          return;
-        }
-      } else {
-        scoreLowSince = null;
-      }
-
-      if(scoreEma <= stopThr){
-        if(scoreLowSince == null) scoreLowSince = now;
-        if(now - scoreLowSince >= stopHoldMs){
-          glideActive = false;
-          scoreStableSince = null;
-          scoreLowSince = null;
-          if(glideTimes.length < 4) glideTimes.push(now - glideStart);
-          currentElapsed = 0;
-        }
-      } else {
-        if(!movementStop) scoreLowSince = null;
-      }
+    } else {
+      scoreStableSince = null;
     }
+    return;
+  }
+
+  // --- RUN ---
+  currentElapsed = now - glideStart;
+
+  // Hard max -> Slot speichern
+  if(currentElapsed >= hardMaxMs){
+    glideActive = false;
+    scoreStableSince = null;
+    scoreLowSince = null;
+    if(glideTimes.length < 4) glideTimes.push(currentElapsed);
+    currentElapsed = 0;
+    return;
+  }
+
+  // --- STOP 1: Bewegung (Armzug/Knie) -> sehr zügig stoppen ---
+  if(movementStop){
+    if(scoreLowSince == null) scoreLowSince = now;
+    const moveStopHold = (p === "side45") ? 120 : 110; // schneller
+    if(now - scoreLowSince >= moveStopHold){
+      glideActive = false;
+      scoreStableSince = null;
+      scoreLowSince = null;
+      if(glideTimes.length < 4) glideTimes.push(now - glideStart);
+      currentElapsed = 0;
+      return;
+    }
+  } else {
+    scoreLowSince = null;
+  }
+
+  // --- STOP 2: Score fällt unter stopThr ---
+  if(scoreEma <= stopThr){
+    if(scoreLowSince == null) scoreLowSince = now;
+    if(now - scoreLowSince >= stopHoldMs){
+      glideActive = false;
+      scoreStableSince = null;
+      scoreLowSince = null;
+      if(glideTimes.length < 4) glideTimes.push(now - glideStart);
+      currentElapsed = 0;
+    }
+  } else {
+    // nur zurücksetzen, wenn NICHT gerade movementStop “anläuft”
+    if(!movementStop) scoreLowSince = null;
+  }
+}
 
     // Hand-axis drawing + measurement (GATED: only when NOT glideActive)
     function drawHandAxis(raw, cssPoints) {
