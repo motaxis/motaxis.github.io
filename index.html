@@ -263,7 +263,7 @@
           <summary>Armzug sehr breit</summary>
           <p class="hint">
             <b>Faustregel:</b> In der Zugphase nicht „sehr breit“ nach außen aufmachen.
-            Richtwert (Anzeige): Hand/Schulter <b>&gt; 1,85×</b> = Rot (deutlich zu weit).
+            Richtwert (Anzeige): Hand/Schulter <b>&gt; 2,10×</b> = Rot (deutlich zu weit).
           </p>
         </details>
         <details>
@@ -486,6 +486,8 @@
     // Helpers
     const dist = (a,b)=>Math.hypot(a.x-b.x, a.y-b.y);
     const distPx = (a,b)=>Math.hypot(a._cx-b._cx, a._cy-b._cy);
+    // NEW: horizontal distance in CSS px (prevents early "red" due to diagonal distance)
+    const distXPx = (a,b)=>Math.abs(a._cx - b._cx);
 
     function angleBetween(u, v) {
       const dot = u.x*v.x + u.y*v.y;
@@ -839,25 +841,28 @@
       return { kneeRatio, kneeDiff: diff, kneeAngles: [aL, aR] };
     }
 
-    // Hand axis thresholds for arm pull (UPDATED):
-    // Grün <= 1.60, Orange <= 1.85, Rot > 1.85
-    // Tip trigger: > 1.90
+    // Hand-Achse (UPDATED):
+    // Measurement uses horizontal (X) distances to reflect "Breite".
+    // Thresholds: Grün <= 1.80, Orange <= 2.10, Rot > 2.10
+    // Tip/stat trigger: > 2.10
     function colorForHandRatio(r) {
-      if (r <= 1.60) return "rgba(0,170,0,0.95)";
-      if (r <= 1.85) return "rgba(255,140,0,0.95)";
+      if (r <= 1.80) return "rgba(0,170,0,0.95)";
+      if (r <= 2.10) return "rgba(255,140,0,0.95)";
       return "rgba(220,0,0,0.95)";
     }
 
     function drawHandAxis(raw, cssPoints) {
       if (!toggleHandAxis.checked || !raw || !cssPoints) return { handRatio: null };
 
-      const wL = cssPoints[15] || cssPoints[19];
-      const wR = cssPoints[16] || cssPoints[20];
+      // Use wrists only for stability
+      const wL = cssPoints[15];
+      const wR = cssPoints[16];
       const sL = cssPoints[11], sR = cssPoints[12];
       if (!wL || !wR || !sL || !sR) return { handRatio: null };
 
-      const shoulderW = distPx(sL, sR);
-      const handW = distPx(wL, wR);
+      // Horizontal widths in CSS px (prevents diagonal-distance spikes)
+      const shoulderW = distXPx(sL, sR);
+      const handW = distXPx(wL, wR);
       const handRatio = (shoulderW > 1) ? (handW / shoulderW) : null;
 
       if (handRatio != null) {
@@ -1425,8 +1430,8 @@
             if (hands.handRatio != null) {
               recStats.avgHandRatioSum += hands.handRatio;
               recStats.avgHandRatioN++;
-              // UPDATED: tip/stat trigger later (deutlich breiter)
-              if (hands.handRatio > 1.90) recStats.handWide++;
+              // UPDATED: trigger aligned with RED threshold (very wide)
+              if (hands.handRatio > 2.10) recStats.handWide++;
             }
 
             const [aL, aR] = legs.kneeAngles || [null,null];
@@ -1440,8 +1445,8 @@
           }
 
           const handDbg = (hands && hands.handRatio != null)
-            ? `hand/shoulder=${hands.handRatio.toFixed(2)}`
-            : `hand/shoulder=—`;
+            ? `hand/shoulderX=${hands.handRatio.toFixed(2)}`
+            : `hand/shoulderX=—`;
 
           drawOverlay(`DEBUG: lm=${raw.length} mask=${hasMask?1:0} maskmax=${(maskInfo.max??0).toFixed(3)} score=${scoreEma.toFixed(2)} ${handDbg} rec=${isRecording?1:0} ui=${isPortraitUI()?"P":"L"}`);
         } else {
