@@ -144,9 +144,6 @@
     .btnRow{ display:flex; gap:10px; flex-wrap: wrap; }
     .btnRow button{ flex: 1 1 auto; }
     .btnRow .wide{ flex: 1 1 100%; }
-    .btnRow{ display:flex; gap:10px; flex-wrap: wrap; }
-    .btnRow button{ flex: 1 1 auto; }
-    .btnRow .wide{ flex: 1 1 100%; }
     
     /* Aufnahme: Start & Stop immer nebeneinander (nur Aufnahme-Zeile) */
 .recRow{
@@ -251,6 +248,14 @@
   <video id="video" class="videoHidden" playsinline autoplay muted></video>
 
   <div class="stack">
+    <div class="block">
+  <div class="blockTitle">Kamera</div>
+  <div class="btnRow">
+    <button id="btnInit" class="primary wide">Kamera aktivieren</button>
+    <button id="btnSwitch" disabled class="wide">Kamera wechseln (Rück)</button>
+  </div>
+</div>
+
    <div class="block">
   <div class="blockTitle">Aufnahme</div>
   <div class="btnRow">
@@ -416,13 +421,6 @@
     </details>
 
     <div class="block">
-      <div class="blockTitle">Aufnahme</div>
-      <div class="btnRow">
-        <button id="btnRec" disabled>Aufnahme starten</button>
-        <button id="btnStop" disabled>Stop</button>
-        <button id="btnShare" disabled>Teilen/Speichern</button>
-      </div>
-    </div>
 
     <div>
       <canvas id="canvas"></canvas>
