@@ -144,6 +144,19 @@
     .btnRow{ display:flex; gap:10px; flex-wrap: wrap; }
     .btnRow button{ flex: 1 1 auto; }
     .btnRow .wide{ flex: 1 1 100%; }
+    .btnRow{ display:flex; gap:10px; flex-wrap: wrap; }
+    .btnRow button{ flex: 1 1 auto; }
+    .btnRow .wide{ flex: 1 1 100%; }
+    
+    /* Aufnahme: Start & Stop immer nebeneinander */
+    .btnRow > .btnRow {
+      display: flex;
+      gap: 10px;
+    }
+    
+    .btnRow > .btnRow button {
+      flex: 1 1 50%;
+    }
 
     video, canvas{
       max-width: 100%;
@@ -240,9 +253,12 @@
   <div class="stack">
     <div class="block">
       <div class="blockTitle">Kamera</div>
-         <div class="btnRow">
-      <button id="btnRec" disabled>Aufnahme starten</button>
-      <button id="btnStop" disabled>Stop</button>
+             <div class="btnRow">
+      <div class="btnRow">
+        <button id="btnRec" disabled>Aufnahme starten</button>
+        <button id="btnStop" disabled>Stop</button>
+      </div>
+    
       <button id="btnShare" disabled class="wide">Teilen/Speichern</button>
     </div>
 
