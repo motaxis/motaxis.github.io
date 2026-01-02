@@ -151,6 +151,16 @@
   gap: 10px;
   flex-wrap: nowrap;
 }
+    /* Kamera: Aktivieren & Wechseln nebeneinander */
+.camRow{
+  display: flex;
+  gap: 10px;
+  flex-wrap: nowrap;
+}
+.camRow button{
+  flex: 1 1 0;
+}
+
 .recRow button{
   flex: 1 1 0;
 }
@@ -251,10 +261,13 @@
     <div class="block">
   <div class="blockTitle">Kamera</div>
   <div class="btnRow">
-    <button id="btnInit" class="primary wide">Kamera aktivieren</button>
-    <button id="btnSwitch" disabled class="wide">Kamera wechseln (Rück)</button>
+    <div class="camRow">
+      <button id="btnInit" class="primary">Kamera aktivieren</button>
+      <button id="btnSwitch" disabled>Kamera wechseln</button>
+    </div>
   </div>
 </div>
+
 
     <!-- Anzeige by default ausgeklappt -->
     <details id="displayBox" open>
