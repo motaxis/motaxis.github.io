@@ -71,8 +71,8 @@
       color: #1f2a33;
       font-size: 13.75px;
       line-height: 1.45;
-      text-align: justify; /* Blocksatz */
-      text-justify: inter-word;
+      text-align: left; /* linksbündig */
+      text-justify: auto;
     }
 
     .stack{
@@ -1386,9 +1386,12 @@
     let isRecording = false;
 
     // Hand detection (only during arm pull phase i.e. outside glideActive)
-    let handWideStreak = 0;
-    const HAND_RED_THR = 2.50;
-    const HAND_STREAK_FRAMES = 8;
+    // Hand detection (only during arm pull phase i.e. outside glideActive)
+    let prevHandTooWide = false;       // <-- NEU: Flanken-Tracking
+    let handWideStreak = 0;            // (optional) lässt du drin, falls du es später wieder brauchst
+    const HAND_RED_THR = 2.50;          // Schwelle bleibt identisch
+    const HAND_STREAK_FRAMES = 8;       // (optional)
+
 
     // HWS extension streak (count tip only if long or frequent)
     let headExtStreakStart = null;
@@ -1403,11 +1406,13 @@
 
       armPullFrames: 0,
       handWideFrames: 0
+      handWideEvents: 0
     };
 
     function resetRecStats() {
       for (const k of Object.keys(recStats)) recStats[k] = 0;
       handWideStreak = 0;
+      prevHandTooWide = false;
       headExtStreakStart = null;
       recStats.headExtStreakMsMax = 0;
     }
@@ -1442,17 +1447,22 @@
       if (p(recStats.legsBent) >= thr) {
         issues.push({ score:p(recStats.legsBent), title:"Beine nicht gestreckt in der Gleitphase", tip:"Nach dem Beinschlag vollständig strecken – kurz stabil gleiten." });
       }
-
       const armPullDen = Math.max(1, recStats.armPullFrames);
       const handWideShare = recStats.handWideFrames / armPullDen;
-      if (handWideShare >= 0.18) {
+      
+      // Früher triggern: wenn es im Aufnahmezeitraum mindestens 2× "rot geworden" ist
+      const earlyWide = recStats.handWideEvents >= 2;
+      
+      if (earlyWide || handWideShare >= 0.18) {
         issues.push({
-          score: handWideShare,
-          title:"Armzug sehr breit",
-          tip:"Im Armzug nicht extrem nach außen aufmachen: Ellbogen eher „hoch“ halten und moderat öffnen."
+          score: earlyWide ? Math.max(0.35, handWideShare) : handWideShare,
+          title: "Armzug sehr breit",
+          tip: earlyWide
+            ? "Arme waren im Zug mehrfach deutlich zu weit geöffnet (≥ 2× Rot). Öffnung moderater halten, Ellbogen eher „hoch“ führen."
+            : "Im Armzug nicht extrem nach außen aufmachen: Ellbogen eher „hoch“ halten und moderat öffnen."
         });
       }
-
+     
       const extShare = p(recStats.headExtAny);
       const extStreak = recStats.headExtStreakMsMax || 0;
       if (extShare >= thr || extStreak >= 700) {
@@ -1710,15 +1720,22 @@
             } else {
               headExtStreakStart = null;
             }
-
-            if (!glideActive && hands.handRatio != null) {
-              recStats.armPullFrames++;
-
-              if (hands.handRatio > HAND_RED_THR) handWideStreak++;
-              else handWideStreak = 0;
-
-              if (handWideStreak >= HAND_STREAK_FRAMES) recStats.handWideFrames++;
+          if (!glideActive && hands.handRatio != null) {
+            recStats.armPullFrames++;
+          
+            const tooWideNow = hands.handRatio > HAND_RED_THR;
+          
+            // Event zählen, wenn es "neu rot" wird (false -> true)
+            if (tooWideNow && !prevHandTooWide) {
+              recStats.handWideEvents++;
             }
+            prevHandTooWide = tooWideNow;
+          
+            // Optional weiterhin "rote Frames" zählen (für Anteil/Score)
+            if (tooWideNow) recStats.handWideFrames++;
+          } else {
+            // wenn keine HandRatio oder in Gleitphase: Flankenstatus zurücksetzen
+            prevHandTooWide = false;
           }
 
           const handDbg = (hands && hands.handRatio != null)
