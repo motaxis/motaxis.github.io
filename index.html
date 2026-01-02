@@ -1601,8 +1601,7 @@
     let running = false;
     let rafId = null;
 
-    const POSE_TASK_URL =
-      "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_heavy/float16/1/pose_landmarker_heavy.task";
+    const POSE_TASK_URL = "./models/pose_landmarker_full.task";
 
     async function createLandmarker(){
       setStatus("Lade Tasks-WASM …");
