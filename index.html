@@ -1771,8 +1771,10 @@
         btnInit.disabled=true;
         applyLayoutFromOrientation();
         setStatus("Initialisiere …");
-        await createLandmarker();
+
+        // ✅ FIX iOS/Safari: Kamera sofort im Click-Handler anfordern
         await startCamera();
+        await createLandmarker();
 
         running=true;
         btnSwitch.disabled=false;
