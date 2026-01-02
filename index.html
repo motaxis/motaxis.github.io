@@ -151,6 +151,16 @@
   gap: 10px;
   flex-wrap: nowrap;
 }
+    .recRow3{
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;       /* auf kleinen Screens darf es umbrechen */
+}
+.recRow3 button{
+  flex: 1 1 0;           /* alle drei gleich breit */
+  min-width: 160px;      /* verhindert zu enge Buttons */
+}
+
     /* Kamera: Aktivieren & Wechseln nebeneinander */
 .camRow{
   display: flex;
@@ -421,16 +431,14 @@
     </details>
 
     <div class="block">
-      <div class="blockTitle">Aufnahme</div>
-      <div class="btnRow">
-        <div class="recRow">
-          <button id="btnRec" disabled>Aufnahme starten</button>
-          <button id="btnStop" disabled>Stop</button>
-        </div>
-    
-        <button id="btnShare" disabled class="wide">Teilen/Speichern</button>
-      </div>
-    </div>
+     <div class="block">
+  <div class="blockTitle">Aufnahme</div>
+  <div class="recRow3">
+    <button id="btnRec" disabled>Aufnahme starten</button>
+    <button id="btnStop" disabled>Stop</button>
+    <button id="btnShare" disabled>Teilen/Speichern</button>
+  </div>
+</div>
     <div>
       <canvas id="canvas"></canvas>
     </div>
