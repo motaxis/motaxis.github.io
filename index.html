@@ -274,7 +274,16 @@ box-sizing: border-box;
           <input type="checkbox" id="showInputVideo" />
           <span class="small">anzeigen</span>
         </label>
-        <span class="hint" style="max-width:none;">(Optional – Output bleibt anonym.)</span>
+        <span class="hint" style="max-width:none;">(Optional – separates Rohvideo unter/über dem Canvas.)</span>
+      </div>
+
+      <div class="rangeWrap">
+        <span>Video im Output-Canvas</span>
+        <label style="border:none; padding:0; border-radius:0;">
+          <input type="checkbox" id="showVideoInCanvas" />
+          <span class="small">einblenden</span>
+        </label>
+        <span class="hint" style="max-width:none;">(Video wird dann auch in der Aufnahme gespeichert.)</span>
       </div>
 
       <div class="rangeWrap">
@@ -528,6 +537,7 @@ const toggleHintBox = document.getElementById("toggleHintBox");
 const filmingPreset = document.getElementById("filmingPreset");
 
 const showInputVideo = document.getElementById("showInputVideo");
+const showVideoInCanvas = document.getElementById("showVideoInCanvas");
 
 const silOpacity = document.getElementById("silOpacity");
 const silThresh = document.getElementById("silThresh");
@@ -763,6 +773,24 @@ function drawMaskContainFromSource(srcCanvas, vw, vh) {
   const offX = (cw - dispW) / 2;
   const offY = (ch - dispH) / 2;
   ctx.drawImage(srcCanvas, offX, offY, dispW, dispH);
+}
+
+function drawVideoContain() {
+  const vw = video.videoWidth || 0;
+  const vh = video.videoHeight || 0;
+  if (!vw || !vh) return;
+
+  const cw = CSS_W, ch = CSS_H;
+  const scale = Math.min(cw / vw, ch / vh);
+  const dispW = vw * scale;
+  const dispH = vh * scale;
+  const offX = (cw - dispW) / 2;
+  const offY = (ch - dispH) / 2;
+
+  ctx.save();
+  ctx.imageSmoothingEnabled = true;
+  ctx.drawImage(video, offX, offY, dispW, dispH);
+  ctx.restore();
 }
 
 function renderMaskToCanvas(segMask) {
@@ -1844,6 +1872,10 @@ function loop(){
       drawOverlay("DEBUG: video not ready");
       rafId = requestAnimationFrame(loop);
       return;
+    }
+
+    if (showVideoInCanvas?.checked) {
+      drawVideoContain();
     }
 
     const ts = performance.now();
